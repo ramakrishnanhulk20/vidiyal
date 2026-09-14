@@ -66,8 +66,9 @@ in Vidiyal places an order.
 
 For the trader:
 
-- The shelf stands every round trip on its spine, coloured by grade, with a sources panel
-  underneath saying which record this is and whether it verified.
+- The home page is one night of trading read back in daylight. The shelf stands every round trip
+  on its spine, coloured by grade, with a sources panel underneath saying which record this is and
+  whether it verified, and the scroll below it walks one trade from the entry to the rule it became.
 - A grade is five numbers, not a letter: entry context, sizing, exit discipline, cost drag and
   reasoning, each with the evidence line that produced it, such as
   `cost: 0.2262 USDT of friction against a gross of 0.0491 USDT, so friction was the whole trade`.
@@ -87,6 +88,22 @@ construction, the only verbs used on it are `order` fills, `account_overview` an
 not one write call was made. Bitget keeps 90 days of fills, so a longer range is clipped to 90
 days and the review says so. With no key set the same command runs against a fixture account,
 so the shape can be seen on a machine that has never held one.
+
+For your account, on the site:
+
+- Sign in at `/connect` with email, Google, X or a passkey, paste a read-only Bitget key, and the
+  desk checks it with one read and shows you what it saw: the account number, the equity and the
+  open positions. A key Bitget refuses is never stored, and the reason comes back as a sentence
+  with the next step in it.
+- The key is sealed with AES-256-GCM under a server key before it is written, and no screen, no
+  list and no error message ever hands any part of it back.
+- `/account` lists your keys and every review read through them. One button reads your last 90
+  days: fills paired into round trips, the market rebuilt around each one, the rubric, the
+  detectors, the checklist. It takes about a minute, and asking twice inside ten minutes gives
+  back the same review rather than reading Bitget again. Six reviews an hour per trader.
+- `/account/reviews/<id>` is your own shelf: the same spines, the same trade pages, the same
+  patterns and checklist, and the gate and the ask working on your record instead of the demo
+  one. Remove a key and every review read with it goes too.
 
 For a judge:
 
@@ -284,8 +301,12 @@ account review skipped: no BITGET_API_KEY
 
 Then the desk, at `http://localhost:3001`, in this order:
 
-1. `/` the shelf. Every round trip as a spine coloured by grade, and the sources panel at the
-   bottom: which record, the range, the public key, the ledger check, when the bundle was written.
+1. `/` the home page, one night read back in daylight. It opens on the shelf, every round trip
+   as a spine coloured by grade, then the sources panel: which record, the range, the public key,
+   the ledger check, when the bundle was written. Scroll on and the same bundle tells the story:
+   the 3 a.m. trade nobody reviewed, its five scores walked one at a time, the habit it repeated
+   and the checklist item that habit became, held against the live market, then the record check
+   and the invitation to hand over your own.
 2. `/trades/<round trip id>` one trade. The letter, then the five scores with the evidence line
    behind each, the signed fills, the market rebuilt around the entry, the headlines the feed
    found in that window, and the judge's own sentence.
@@ -327,6 +348,16 @@ Every key in `.env` is optional and nothing in this repo logs one:
 | `FINNHUB_API_KEY` | Company news and the earnings and macro calendars | The feed still reads SEC EDGAR and GDELT, which need no key |
 | `KAAVAL_USER_AGENT` | The contact address SEC asks every caller to send | EDGAR refuses the request |
 | `KAAVAL_HTTP_TIMEOUT_MS`, `KAAVAL_BITGET_TIMEOUT_MS` | Per request timeouts | 20000 and 15000 milliseconds |
+| `NEXT_PUBLIC_PRIVY_APP_ID`, `PRIVY_APP_SECRET` | Sign-in for the account area | `/connect` and `/account` say plainly that sign-in is not set up on this host |
+| `DATABASE_URL` | The Postgres that holds traders, their sealed keys and their reviews | The account screens refuse to store anything and say which setting is missing |
+| `KAAVAL_KEY_SEAL_HEX` | The 32 bytes a trader's Bitget key is sealed under. Kaaval and Vidiyal share one database and one seal key, so the name stays as it is | No key can be stored, and the screens say so |
+
+The account area needs its database brought up to shape once, which is one command and is safe to
+run again at any time:
+
+```bash
+cd web && npx tsx scripts/migrate.mts   # with DATABASE_URL unset it migrates an embedded Postgres and keeps nothing
+```
 
 The desk is a Next.js app in `web/`. It reads the bundles the engine wrote and never calls a
 third-party API from the browser:

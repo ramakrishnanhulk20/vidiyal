@@ -320,3 +320,27 @@ body {
     transform: none;
   }
 }
+
+/* The one thing on the account screens that moves while a trader waits: a slow pulse
+   beside the sentence saying what is being read. It stops for a reader who asked for
+   less motion, who gets the sentence on its own. */
+.live-dot {
+  animation: live-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
+    opacity: 0.8;
+  }
+}

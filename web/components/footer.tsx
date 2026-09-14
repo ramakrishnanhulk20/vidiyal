@@ -19,11 +19,20 @@ function Arrow() {
 }
 
 /**
- * kaaval is the address of the night watch, handed in by the screen that wants the sister
- * line. A screen that does not hand one in does not draw the line, so the footer under the
- * docs stays what it has always been.
+ * The address of the night watch. lib/story has the same reader, but that module pulls the
+ * whole review engine in behind it and this footer now stands under every page, so it reads
+ * the one setting it needs for itself.
  */
-export function Footer({ kaaval }: { kaaval?: string }) {
+function kaavalUrl(): string {
+  const raw = process.env.KAAVAL_URL;
+  return raw === undefined || raw.trim() === ""
+    ? "http://localhost:3000"
+    : raw.trim().replace(/\/+$/, "");
+}
+
+export function Footer() {
+  const kaaval = kaavalUrl();
+
   return (
     <footer className="mt-32 border-t border-bone/10 pt-12">
       <Rise>
@@ -43,11 +52,9 @@ export function Footer({ kaaval }: { kaaval?: string }) {
             <Link href="/docs" className={LINK}>
               documentation <Arrow />
             </Link>
-            {kaaval === undefined ? null : (
-              <a href={kaaval} className={LINK}>
-                kaaval, the night watch <Arrow />
-              </a>
-            )}
+            <a href={kaaval} className={LINK}>
+              kaaval, the night watch <Arrow />
+            </a>
             <a href={PROGRAM} target="_blank" rel="noreferrer" className={LINK}>
               bitget program <Arrow />
             </a>

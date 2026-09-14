@@ -48,8 +48,14 @@ export function Nav() {
         className="fixed inset-x-0 bottom-0 z-40 border-t border-bone/10 bg-ground/85 backdrop-blur-md md:inset-x-auto md:bottom-auto md:right-[4vw] md:top-[3vh] md:border-0 md:bg-transparent md:backdrop-blur-none"
       >
         {/* On a narrow window the invitation gets its own quiet row above the rooms, where
-            it is reachable with a thumb and never crowds the six labels beneath it. */}
-        <div className="border-b border-bone/10 px-5 py-2 text-right md:hidden">
+            it is reachable with a thumb and never crowds the six labels beneath it. Whether
+            this browser is signed in is only known once Privy has answered in the browser,
+            which the server cannot wait for, so the shelf is offered to everybody and the
+            page behind it asks for a sign-in. */}
+        <div className="flex items-center justify-end gap-6 border-b border-bone/10 px-5 py-2 md:hidden">
+          <Link href="/account" className={QUIET}>
+            my shelf
+          </Link>
           <Link href="/connect" className={QUIET}>
             review my trades
             <span
@@ -87,6 +93,11 @@ export function Nav() {
 
           <li aria-hidden className="hidden md:block">
             <span className="block h-3 w-px bg-bone/15" />
+          </li>
+          <li className="hidden md:block">
+            <Link href="/account" className={QUIET}>
+              my shelf
+            </Link>
           </li>
           <li className="hidden md:block">
             <Link href="/connect" className={QUIET}>

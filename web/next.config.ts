@@ -16,13 +16,19 @@ const nextConfig: NextConfig = {
   // On Vercel the root directory is web/, so only web/node_modules is ever installed.
   // The engine files one folder up ask for their packages by bare name and Node would
   // look for them beside themselves, in a vidiyal/node_modules that is not there. This
-  // points the bundler at web's own packages first, wherever the build runs.
+  // adds web's own packages as the last place to look, wherever the build runs. Last, not
+  // first: a package that ships its own copy of a dependency has to keep winning, or the
+  // hoisted copy at the top gets handed to a package that cannot use it. The sign-in SDK
+  // is the case that proves it, through viem and its own newer copy of ox.
   webpack: (config) => {
     const own = resolve(here, "node_modules");
     const existing = config.resolve.modules ?? ["node_modules"];
-    config.resolve.modules = [own, ...existing.filter((dir: string) => dir !== own)];
+    config.resolve.modules = [...existing.filter((dir: string) => dir !== own), own];
     return config;
   },
+  // The story used to live at /story and is now the home page. Anything already pointing
+  // at the old address, a link in a post or a judge's bookmark, lands on the same reading.
+  redirects: async () => [{ source: "/story", destination: "/", permanent: true }],
   experimental: {
     // In import mode the desk calls the engine in this process, and the engine is the
     // TypeScript one folder up, outside the app. This is what lets it be compiled.

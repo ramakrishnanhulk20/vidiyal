@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { Footer } from "@/components/footer";
 import { Grain } from "@/components/grain";
 import { Nav } from "@/components/nav";
 import { SmoothScroll } from "@/components/smooth-scroll";
@@ -44,6 +45,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SmoothScroll />
         <Nav />
         {children}
+        {/* Every page ends the same way, and on a narrow window the bottom padding clears the
+            nav strip that sits along the foot of the screen. */}
+        <div className="px-6 pb-28 md:px-[5vw] md:pb-20">
+          <Footer />
+        </div>
         <Grain />
       </body>
     </html>

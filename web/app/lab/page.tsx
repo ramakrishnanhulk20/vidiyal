@@ -124,7 +124,7 @@ export default async function Lab() {
       <Label className="mt-24">the beats of the landing story, one at a time</Label>
       <p className="mt-3 font-mono text-[10px] uppercase leading-[1.9] tracking-[0.16em] text-bone/25">
         each one reads the same review bundle the shelf reads &middot; the whole page, in order,
-        is at /story
+        is the home page
       </p>
       </main>
 
@@ -165,7 +165,7 @@ function StoryBench({
       <Bench label="beat 2, three in the morning">
         <Night night={night} />
       </Bench>
-      <Bench label="beat 3, five scores, one trade, shown at rest: the pinned walk is on /story">
+      <Bench label="beat 3, five scores, one trade, shown at rest: the pinned walk is on the home page">
         {scores === null ? <Missing /> : <ScoresPinned scores={scores} still />}
       </Bench>
       <Bench label="beat 4, the same mistake twice, with the live gate verdict">

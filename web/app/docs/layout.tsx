@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { DocsHeader } from "@/components/docs/docs-header";
 import { DocsSidebar } from "@/components/docs/docs-sidebar";
-import { Footer } from "@/components/footer";
 import { docsNav } from "@/lib/docs-source";
 
 export default function DocsLayout({ children }: { children: ReactNode }) {
@@ -39,8 +38,6 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
 
           <div className="min-w-0">{children}</div>
         </div>
-
-        <Footer />
       </div>
     </div>
   );
