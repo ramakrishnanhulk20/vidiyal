@@ -53,7 +53,7 @@ because the loop reads `.env` itself.
 | Where | Result |
 |---|---|
 | The engine, at the repo root | found 0 vulnerabilities |
-| The desk, in `web/`, which now builds the docs too | found 0 vulnerabilities |
+| The desk, in `web/`, which now builds the docs too | 25 advisories (24 moderate, 1 high) after the sign-in layer was added, every one inside the sign-in SDK's wallet dependency chain (`@wagmi/connectors`, `@reown/appkit`, `@walletconnect/utils`, `viem`); the desk creates no wallets and signs nothing, so the path is never exercised; `npm audit fix` without breaking changes was applied and this is what remains |
 
 There is no third package tree to audit. The docs are MDX files inside the desk, compiled by the
 same build, so they carry no dependencies a reader's browser would not already have loaded.

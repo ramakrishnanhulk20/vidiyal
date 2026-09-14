@@ -272,7 +272,17 @@ async function accountReview(): Promise<void> {
   const reader = bitgetAccountReader(createBitget({ modules: "all" }), accountId);
   const toTs = Date.now();
   const fromTs = toTs - 7 * 24 * 60 * 60 * 1000;
-  const fills = await reader.fills({ fromTs, toTs });
+  // A wrong or expired key is the common case for a stranger running this, and it must
+  // end the step with a sentence, not a stack trace, because the ledger review above it
+  // has already proved what this command is for.
+  let fills;
+  try {
+    fills = await reader.fills({ fromTs, toTs });
+  } catch (error) {
+    const text = error instanceof Error ? error.message : String(error);
+    console.log(`account review skipped: Bitget refused the key (${text.slice(0, 160)})`);
+    return;
+  }
   const { trips, skipped } = pairRoundTrips(fills);
   console.log(
     `account review: ${fills.length} fills over 7 days paired into ${trips.length} round trips, ${skipped.length} skipped`,

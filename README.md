@@ -341,7 +341,7 @@ Every key in `.env` is optional and nothing in this repo logs one:
 
 | Key | What it is for | Without it |
 |---|---|---|
-| `BITGET_API_KEY`, `BITGET_SECRET_KEY`, `BITGET_PASSPHRASE` | A read-only account review | The proof prints `account review skipped: no BITGET_API_KEY` and reviews the ledger only |
+| `BITGET_API_KEY`, `BITGET_SECRET_KEY`, `BITGET_PASSPHRASE` | A read-only account review | The proof prints `account review skipped: no BITGET_API_KEY` and reviews the ledger only; a key Bitget refuses prints `account review skipped: Bitget refused the key` with Bitget's reason, and the ledger review above it still stands |
 | `BITGET_ACCOUNT_ID` | A label for the account being reviewed, which Bitget never sees | The record is tagged `account` |
 | `KAAVAL_LEDGER_DIR`, `KAAVAL_LEDGER_PUBLIC_KEY_HEX`, `KAAVAL_BRAIN` | Which ledger, which public key, which brain | The Kaaval checkout beside this repo, brain `claude` |
 | `ANTHROPIC_API_KEY`, `KAAVAL_CLAUDE_MODEL` | The reasoning score and the written answer | A trade with a note is left ungraded rather than guessed at, and the evidence table writes the answer itself |
