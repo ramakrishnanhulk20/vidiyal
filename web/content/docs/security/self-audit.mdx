@@ -58,6 +58,21 @@ because the loop reads `.env` itself.
 There is no third package tree to audit. The docs are MDX files inside the desk, compiled by the
 same build, so they carry no dependencies a reader's browser would not already have loaded.
 
+## The signed-in trader layer
+
+The tests that cover a trader's own key live in `test/tenant` and `web/test/tenant`, and they came
+after the count above. They hold a sign-in token refused on its shape before any network call, a
+connection listing that carries no sealed value, a delete that matches only this trader's row, the
+same Bitget account connected twice leaving one row and an audit line saying it was a reconnect,
+the sixth review in an hour refused with the time the next one is free, a second review inside ten
+minutes handing back the stored one rather than reading Bitget again, a range that runs backwards
+refused before any key is opened, and Bitget's Classic mode refusal passed through in its own terms
+with nothing stored.
+
+The live half was not executed. As of 14 September 2026 the only Bitget account this project holds
+is in Classic mode, so all of those run against recorded responses and a stand-in exchange, and the
+proof command still ends with the account review skipped rather than showing one.
+
 ## What this does not amount to
 
 No external audit, no penetration test, no formal threat model document, and no live run against a

@@ -41,6 +41,31 @@ The Bitget account reader is written, typechecked and shares all of its downstre
 ledger path, and it has never been run against a real read-only key, because none exists for this
 project yet. The proof command says so rather than showing a demo account review.
 
+## What a stored key is exposed to
+
+A signed-in trader can leave a read-only Bitget key with us, sealed under a key that lives in the
+server's environment. These are the holes in that, stated rather than implied.
+
+- **Both halves together open every key.** Somebody who takes a copy of the database and a copy of
+  the server's environment can open every stored credential. Two things blunt that and neither
+  removes it: the key is read-only, so whoever opened it could look and not touch, and a Bitget key
+  is revoked in the Bitget app in seconds, which is the first thing we would tell a connected
+  trader to do.
+- **The seal key is not rotated.** The sealed format carries a version field so a rotation could be
+  told apart from a corrupt row, but nothing rotates it today, and changing it now would lock every
+  trader out of their own connection until they pasted the key in again.
+- **Sign-in belongs to Privy.** If Privy is down, nobody signs in and nobody gets a review, and
+  there is no second way in. What is already stored is not at risk in that hour, it is simply out
+  of reach.
+- **A review shows a trader's own trades to the model provider.** On a host with a model key, the
+  reasoning judge reads the trader's note with the trade beside it, so those trades and notes go to
+  the model provider inside the prompt. No credential is ever in a prompt. A host with no model key
+  leaves every note ungraded instead, which is the state described at the top of this page.
+- **None of this has met a live unified account.** As of 14 September 2026 the only Bitget account
+  this project holds is in Classic mode. The section above says what that leaves unproven, and the
+  field names the account reader matches for assets and fills stay candidates across several
+  spellings until a live UTA key settles them.
+
 ## The tests do not cover everything
 
 The suite runs against recorded Bitget responses and a fake model, and it carries no credentials.

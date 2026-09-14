@@ -26,10 +26,47 @@ The web server that renders pages holds no key. When you use the gate or the ask
 spawns `web/scripts/engine-gate.mts` or `engine-ask.mts` under tsx from the engine folder, writes
 the payload to its stdin and reads JSON back. The child reads the engine's `.env` itself.
 
-That split started as a bundler problem and turned into the useful property: a compromise of the
-rendering process finds no Bitget key and no Anthropic key, because neither was ever loaded there.
+That split started as a bundler problem and turned into a useful property on the machine that
+holds the engine: a compromise of the rendering process there finds no Bitget key and no
+Anthropic key, because neither was ever loaded into it. On a hosted deploy the desk runs in
+import mode instead, where a signed-in trader's review runs inside the web process and opens
+their sealed key for the seconds it needs; the section below says what protects that key and
+what does not.
 
 `.env` is git ignored, `.env.example` carries every key name with a one-line comment and no value.
+
+## A trader's own key
+
+A trader can sign in and connect their own read-only key, which qualifies the paragraph above in
+one way worth naming out loud: the desk process still holds no engine credential and no Anthropic
+key of the engine's, but it does open a trader's sealed key for the seconds their review runs.
+This is what stands around that.
+
+- Every action that touches a key verifies the Privy access token on the server against this app's
+  own id and secret, then works on the user id that check returned. Nothing is keyed on an id the
+  browser sent, and a string that is not shaped like a token is refused before any network call.
+- The three credential strings are sealed together with AES-256-GCM under `KAAVAL_KEY_SEAL_HEX`, a
+  32 byte key held only in the host's environment, with a fresh random IV every time. A copy of the
+  database is ciphertext without the environment, and the environment opens nothing without the
+  database.
+- A key is opened on the server for the seconds a review runs and by nothing else. It is never
+  logged, never put in an error message and never returned to a browser. The connection list names
+  its columns one at a time, so a table that grows a field later cannot push the sealed value onto
+  a page.
+- Read-only is our configuration, not the key's. The surface built for a trader's credential sets
+  the SDK's `readOnly` on with no argument that can turn it off, so a write action is refused at the
+  SDK before it reaches a credential or the network. No Bitget operation reports what a key is
+  allowed to do, so we never claim to have checked the key's own permissions. We say what our code
+  does with it.
+- Six reviews an hour per trader, counted in the database against the verified user id rather than
+  a cookie or anything else a browser chooses, and a second review of the same key inside ten
+  minutes hands back the one already stored instead of reading Bitget again. Every connect,
+  reconnect, removal and review writes an audit row in the same transaction as the thing it
+  describes.
+- A key Bitget refuses leaves nothing behind, because nothing is written until the check read comes
+  back. An account still in Classic mode gets the one step that fixes it, in Bitget's own terms,
+  rather than a stack trace. As of 14 September 2026 a Classic account is the only live Bitget
+  account this project has met.
 
 ## The record is checked before it is read
 
