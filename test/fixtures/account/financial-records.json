@@ -1,0 +1,18 @@
+{
+  "list": [
+    {
+      "billId": "7701000001",
+      "coin": "USDT",
+      "type": "transfer_in",
+      "amount": "500.00",
+      "cTime": "1788400000000"
+    },
+    {
+      "billId": "7701000002",
+      "coin": "USDT",
+      "type": "funding_fee",
+      "amount": "-1.24",
+      "cTime": "1788505200000"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+---
+title: "Every npm script"
+label: "npm scripts"
+---
+
+## The engine, from the repo root
+
+| Command | What it runs | What it prints |
+|---|---|---|
+| `npm test` | `vitest run` | The file and test counts. On 2026-09-12: 10 test files passed and 2 skipped, 116 tests passed and 3 skipped, in 1.14 seconds |
+| `npm run test:watch` | `vitest` | The same, rerun on every save |
+| `npm run typecheck` | `tsc --noEmit` | Nothing when it is clean |
+| `npm run review` | `tsx scripts/review.ts` | The ledger check, the pairing, one line per graded trade, then the file it wrote with the counts |
+| `npm run proof:review` | `tsx scripts/proof-review.ts` | The whole pipeline against live Bitget data: the ledger check, every trade with its five scores and evidence, the detectors that fired and the ones that did not, the checklist, one idea held against it, the Agent Hub dry run, one answered question, and the account leg or the reason it was skipped |
+| `npm run review -- --all` | The same script over every brain the ledger holds | One block per brain, then the manifest it wrote and the graded count per bundle |
+| `npm run discover` | `tsx scripts/discover.ts` | `wrote docs/dev/account-schemas.md with 11 schemas`, the SDK's own schema for every verb Vidiyal touches. Needs no API key |
+
+`LIVE=1 npm test` adds the two skipped files, which call the public Bitget API and the news hosts
+for real.
+
+The review loop has no npm script of its own. It is run directly, or under pm2:
+
+```bash
+npx tsx scripts/review-loop.ts --once   # one rebuild of every brain, then exit
+pm2 start ecosystem.config.cjs          # the vidiyal-review app, every hour
+```
+
+It logs one timestamped line per step: the ledger it is watching, the brains it found, the rebuild
+and how long it took, and the minutes until the next one.
+
+## The desk, from `web/`
+
+| Command | What it runs |
+|---|---|
+| `npm run dev` | `next dev -p 3001`, which is what pm2 keeps up as `vidiyal-web` |
+| `npm run build` | `next build` |
+| `npm run start` | `next start -p 3001` |
+| `npm run lint` | `eslint` |
+
+`web/scripts/print-desk.ts` prints the shelf as text (source, range, count, ledger check, then one
+line per spine). It is not wired to an npm script: run it with tsx when you want to see what the
+desk sees without a browser.
+
+## The docs
+
+These pages are the `/docs` route of the desk, built from the MDX in `web/content/docs`. They
+have no commands of their own: `npm run dev` and `npm run build` in `web/` serve and build them
+with every other screen, and the search index is the route `/docs/api/search` that the same build
+produces.

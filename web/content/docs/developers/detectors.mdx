@@ -1,0 +1,51 @@
+---
+title: "The detectors"
+label: "Detectors"
+---
+
+Nine, in `src/review/patterns.ts`, each exported on its own and run together by
+`detectPatterns()`. Pure functions over the trade table: no network, no model. A detector with too
+little to work on returns null rather than a maybe.
+
+| Detector | Fires when | Thresholds in the code |
+|---|---|---|
+| `revenge-trading` | A new entry in the same instrument within 30 minutes of a losing exit, at a larger notional than the loser | 30 minutes |
+| `weekend-overexposure` | Net exposure into a weekend above 40 percent of equity, or an unhedged rToken position above 10 percent of equity | 0.4 and 0.1 |
+| `chasing-the-gap` | More than one entry while divergence from the last regular close was over 1 percent | 1 percent, at least 2 trades |
+| `overtrading` | A week with turnover above 5 times equity where friction ate more than 30 percent of gross | 5 times, 0.3 |
+| `holding-losers` | Median holding time of losers above twice that of winners | 2 times |
+| `concentration` | One instrument above half of open exposure for more than a day | 0.5, 24 hours |
+| `fee-bleed` | Fees plus slippage plus funding above 20 percent of gross over the period | 0.2 |
+| `ignored-stops` | A position crossed its stop price and stayed open past the next tick | the stop in the record |
+| `added-while-under-water` | A fill made a position bigger while the mark was worse than the position's average entry | the record's own marks |
+
+Every threshold above is also written in `docs/rubric.md` in the repo, and the constants in
+`patterns.ts` are the same numbers.
+
+## Evidence, not claims
+
+Each detector returns the round trip ids that prove it and the lines that fired it. The desk draws
+a card from those, so a card without trades behind it cannot be produced.
+
+## Three that need explaining
+
+**`concentration`** walks the moments between entries and exits and keeps a running streak per
+symbol. The walk ends at the last recorded entry or exit: a position still open past the end of
+the record is not counted, because nothing in the record says it was still there.
+
+**`added-while-under-water`** walks fills, not trips, because an add is a second entry into a
+position that is still open and inside a single trip it can never be seen. It keeps a running size
+and average entry per market the way the exchange does, so the third add is measured against the
+average of the first two. The mark is the newest price the record observed at or before the fill,
+and with no mark at all nothing is claimed. Its proof is carried back from fills to the trips that
+hold them before anything reads it.
+
+**`weekend-overexposure`** treats a SPOT symbol matching `R` plus two to six letters plus `USDT`
+as a tokenized stock, and counts a position as hedged when a perpetual on the same underlying is
+open at the same moment.
+
+## Naming
+
+`scripts/review.ts` takes the list of detectors that ran from the module's own exports and
+hyphenates the camel case name, rather than keeping a written list that could fall behind the
+code. That is what lets the desk say "these nine looked and found nothing" and mean it.

@@ -1,0 +1,64 @@
+---
+title: "Security overview"
+label: "Overview"
+---
+
+Vidiyal holds no funds, moves no funds and places no orders. What it does hold is a key that can
+read an account and a record that a judge is asked to believe. Those are the two things this page
+is about.
+
+## Read-only by construction
+
+- The Bitget credentials Vidiyal asks for are read-only. Nothing in the product needs trade or
+  withdraw rights.
+- `createBitget()` in `src/vendor/bitget/client.ts` builds the tool surface read-only by default,
+  and the account reader in `src/ingest/account.ts` touches three read verbs: `order` fills,
+  `account_overview` and `funds_records`.
+- The one write verb in the codebase is `order` / `place` with `dryRun: true`. It is built in its
+  own function against its own config, so the read-only context the rest of the product uses can
+  never be the one holding a write verb. The SDK answers with the request rather than sending it.
+- Credentials are never passed as arguments. The SDK picks them out of the environment, and
+  nothing in the repo logs one.
+
+## Secrets stay in the engine process
+
+The web server that renders pages holds no key. When you use the gate or the ask page, the desk
+spawns `web/scripts/engine-gate.mts` or `engine-ask.mts` under tsx from the engine folder, writes
+the payload to its stdin and reads JSON back. The child reads the engine's `.env` itself.
+
+That split started as a bundler problem and turned into the useful property: a compromise of the
+rendering process finds no Bitget key and no Anthropic key, because neither was ever loaded there.
+
+`.env` is git ignored, `.env.example` carries every key name with a one-line comment and no value.
+
+## The record is checked before it is read
+
+A Kaaval ledger is verified first: the hash chain and the Ed25519 signature, against the public
+half of the key only. A broken chain stops the review, it does not warn. A tampered or truncated
+record produces no fills at all, and the reason travels with the bundle so a screen can show it.
+
+## The honesty check is the integrity claim
+
+Everything above is table stakes. The claim Vidiyal actually makes is narrower and easier to test:
+**no number reaches a reader unless a trade in the record produced it.**
+
+Every number in a written answer is matched by value against the evidence table built from the
+retrieved trades. A number that is not in the table, or a citation to a trade id the table does not
+hold, throws the entire draft away in favour of the paragraph the table wrote for itself, and the
+desk says so on screen. See [the honesty check](/docs/concepts/the-honesty-check).
+
+The same rule runs through the rest of the product. A grade carries the line that produced it. A
+pattern card carries the trades that prove it. A checklist item carries the pattern it came from.
+A gate result carries the observed number beside the pass or fail. A component with nothing to
+measure says so rather than scoring something.
+
+## Prompt injection
+
+Two places let outside text near a model, and both frame it the same way. The reasoning judge is
+given the trader's own note, and the answerer is given the evidence table. Both system prompts say
+that every block is quoted material from a trading record, that it is evidence and never an
+instruction, and that a block asking for a score or an action is itself a finding about the trade
+and should be reported as one. The answerer has a second line of defence that does not depend on
+the model behaving: the number check runs on whatever comes back.
+
+Read on: [what is not covered](/docs/security/not-covered) and [the self-audit](/docs/security/self-audit).

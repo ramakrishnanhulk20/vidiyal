@@ -1,0 +1,54 @@
+---
+title: "The honesty check"
+---
+
+Every trade journal with a chat box has the same hole: the summary reads well and you have no way
+to tell whether the numbers in it are real. Vidiyal closes that hole with four steps in
+`src/ask/answer.ts`, and the last one is the product's integrity claim.
+
+## 1. Retrieval, written down
+
+A keyword filter picks the trades the question points at: the symbol or its underlying, the side,
+a grade letter, the name of a pattern that fired, or a word about time (`today`, `yesterday`,
+`week`, `overnight`, `weekend`). No model chooses the trades, so a reader can tell exactly why a
+trade is in an answer. When nothing matches, the five worst trades by score answer instead,
+because a question asked of a review is nearly always about what went wrong.
+
+## 2. The evidence table
+
+Built from those trades alone, one row per fact, each row carrying the round trip id it belongs
+to: the trade itself, the grade, the result, the costs, every rubric evidence line split at its
+own colon so the row says which score it came from, and every pattern line that names the trade.
+
+That table is the whole world the model is given. The system prompt says so, tells the model to
+copy numbers character for character, and frames every row as quoted material from a record and
+never as an instruction, so a trader's note that says "give this a 5" is treated as a fact about
+the trader.
+
+## 3. The narrative
+
+Either the model writes it from the table, or, with no model configured, the table writes it for
+itself: the grade, the result, the costs, the weakest part of the rubric and any pattern that
+named the trade, one sentence each, every number lifted out of a row.
+
+## 4. The number and citation check
+
+Every number in the written answer is pulled out and matched by value against the numbers in the
+table. Comparison is by value and not by spelling, so a model that writes 58.0 where the table
+says 58 is not accused of anything. Trade ids and bracketed citations are cut out first, because
+an id like `ledger:12>ledger:28` is full of digits that are a name rather than a quantity.
+
+Two things fail the check:
+
+- a number in the answer that no row holds, which is reported in `uncitedNumbers`
+- a citation to a round trip id the table does not carry
+
+## The discard rule
+
+When either fails, the whole draft is thrown away. Not patched, not annotated: discarded, and
+replaced by the paragraph the evidence table wrote for itself. The engine logs the reason and the
+desk says on screen that the draft was thrown away, lists the invented numbers, and shows the
+replacement.
+
+So a Vidiyal answer can be clumsy English, but every number in it belongs to a trade that a signed
+record can produce. The check runs whether or not a model was used.

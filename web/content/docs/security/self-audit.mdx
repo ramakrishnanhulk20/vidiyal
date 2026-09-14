@@ -1,0 +1,64 @@
+---
+title: "The self-audit"
+label: "Self-audit"
+---
+
+Say the important part first: **this is a self-audit.** No third party has reviewed Vidiyal. What
+follows is a list of things that were executed, with the output, so a reader can rerun any of them
+rather than take a claim.
+
+## The honesty check, live
+
+`npm run proof:review` on 2026-09-12 ran the whole pipeline against live Bitget data and ended with
+a question answered over the evidence table:
+
+```
+  cited refs: ledger-demo:4>ledger-demo:6, ledger-demo:4>open
+  numbers with no evidence behind them: none, every number in the answer came from a trade
+
+account review skipped: no BITGET_API_KEY
+```
+
+Two things in those four lines. Every number the model wrote was matched back to a row of the
+evidence table, and the run declined to invent an account review when no key was set rather than
+showing a demo one.
+
+The other half of the check, the discard path, is covered in `test/ask/answer.test.ts`: an answer
+carrying a number the table does not hold is thrown away and the table's own paragraph is returned
+with the invented numbers listed.
+
+## The tests
+
+`npm test` on 2026-09-12:
+
+```
+ Test Files  10 passed | 2 skipped (12)
+      Tests  116 passed | 3 skipped (119)
+```
+
+1.14 seconds, nothing touching the network. The skipped files are the two live ones behind
+`LIVE=1`, which call the public Bitget API and the news hosts for real.
+
+## The secrets sweep
+
+A grep over `src`, `scripts`, `test`, `web` and the markdown for an assigned api key, secret,
+passphrase, private key, seed phrase or mnemonic returned nothing. `.env` is git ignored,
+`.env.example` holds key names and comments and no values, and the pm2 config carries no secret
+because the loop reads `.env` itself.
+
+## The dependency audit
+
+`npm audit --omit=dev` on 2026-09-14, after the documentation moved into the desk at `/docs`:
+
+| Where | Result |
+|---|---|
+| The engine, at the repo root | found 0 vulnerabilities |
+| The desk, in `web/`, which now builds the docs too | found 0 vulnerabilities |
+
+There is no third package tree to audit. The docs are MDX files inside the desk, compiled by the
+same build, so they carry no dependencies a reader's browser would not already have loaded.
+
+## What this does not amount to
+
+No external audit, no penetration test, no formal threat model document, and no live run against a
+real Bitget account. [What is not covered](/docs/security/not-covered) is the honest list.

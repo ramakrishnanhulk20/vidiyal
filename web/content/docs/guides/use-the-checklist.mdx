@@ -1,0 +1,40 @@
+---
+title: "Use the checklist"
+---
+
+The checklist is what the patterns became. One pattern that fired, one item, with a test name the
+gate switches on. Nothing on it was chosen by hand, which is why it is short: the bundle on the
+desk earned exactly one item.
+
+## The map from pattern to item
+
+| Pattern | Item | Test |
+|---|---|---|
+| `revenge-trading` | No re-entry within 30 minutes of a loss in the same name | `no-reentry-after-loss` |
+| `weekend-overexposure` | Net exposure into a weekend stays under 40 percent of equity | `weekend-exposure-under-40` |
+| `chasing-the-gap` | No entries while the price is more than 1 percent from the last regular close | `divergence-under-1pct` |
+| `overtrading` | This week of turnover stays under 5 times equity | `weekly-turnover-under-5x` |
+| `holding-losers` | No adding to a name that is already a day old and under water | `no-stale-loser-open` |
+| `concentration` | No instrument holds more than half of open exposure | `symbol-under-half-exposure` |
+| `fee-bleed` | The round trip costs less than 20 basis points, a fifth of a one percent move | `cost-under-20-bps` |
+| `ignored-stops` | No open position in this name is already past its stop | `stop-not-already-crossed` |
+
+The ninth detector, `added-while-under-water`, has no automatic test of its own. A pattern with no
+test still becomes an item, marked `by-hand` for a person to check, because dropping it would
+quietly shrink the checklist the review just earned.
+
+## Reading an item
+
+Each item carries a stable id (`check-` and the pattern name), the pattern it came from, the
+sentence a person reads, and the test the gate runs. The id is stable across reviews, so a note
+kept against an item survives the next review.
+
+## An empty checklist
+
+No pattern fired means no item, and the desk says that in those words rather than showing a blank
+page. It is a result about the record, not a gap in the product.
+
+## Running it
+
+The checklist does nothing on its own. [The gate](/docs/guides/check-an-idea) runs every item against the
+live market before an order exists.

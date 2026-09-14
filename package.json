@@ -1,0 +1,30 @@
+{
+  "name": "vidiyal",
+  "version": "0.1.0",
+  "description": "Vidiyal reads your real Bitget trades, rebuilds the market around each one, grades the decision, finds your repeating mistakes, and turns them into a checklist every new order must pass.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "test:watch": "vitest",
+    "proof:review": "tsx scripts/proof-review.ts",
+    "discover": "tsx scripts/discover.ts",
+    "review": "tsx scripts/review.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.124.0",
+    "@bitget-ai/bitget-agent-sdk": "3.3.0",
+    "dotenv": "17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "26.5.0",
+    "tsx": "4.23.13",
+    "typescript": "7.0.2",
+    "vitest": "5.0.0"
+  },
+  "private": true
+}

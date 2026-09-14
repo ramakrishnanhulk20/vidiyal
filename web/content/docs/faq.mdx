@@ -1,0 +1,83 @@
+---
+title: "FAQ"
+---
+
+## Does it place orders?
+
+No. The only write verb anywhere in the codebase is `order` / `place` with `dryRun: true`, and the
+SDK answers that with the request rather than sending it. It is built in its own function against
+its own config, so the read-only context the rest of the product uses is never the one holding a
+write verb. A passing idea ends at the request Bitget would have received, on screen, unsent.
+
+## Is the record real?
+
+The record in the demo bundle is a simulated one: the signed ledger of Kaaval's Claude brain, a
+paper-trading agent that runs against live Bitget market data. The prices, the books, the funding
+and the news around every trade are real. The fills are not, because no money was at risk.
+
+Everything else is real regardless of which record is loaded: the market rebuilt around each entry
+comes from Bitget on the day the review runs, and the same command points at a Bitget account with
+a read-only key.
+
+## Why grade process and not profit and loss?
+
+Because profit and loss over five trades, or fifty, is mostly luck, and a number that is mostly
+luck cannot tell you what to do differently tomorrow. Vidiyal grades the things that were decided
+at the moment of the trade: how far the price had walked from the last regular close when you
+entered, how big the order was against your equity and against the visible book, whether the stop
+held, what friction ate, and whether the stated thesis and the outcome belonged to the same world.
+
+Profit and loss is on the screen as a fact about the trade. It is never an input to the first four
+scores.
+
+## What if the model invents a number?
+
+The draft is thrown away. Every number in a written answer is matched by value against the evidence
+table those trades produced, and a number no row holds, or a citation to a trade id the table does
+not carry, discards the whole answer in favour of the paragraph the table wrote for itself. The
+page says the draft was thrown away and lists the invented numbers. Nothing is quietly corrected.
+
+## Can it review my Bitget account?
+
+That is what it is for. Make a read-only API key, put it in `.env`, and the account reader pulls
+your fills, your equity and your balance changes through Agent Hub read verbs. Be told plainly:
+that path has not been run against a live key yet, because no read-only key exists for this project
+so far. See [review a Bitget account](/docs/guides/review-a-bitget-account).
+
+## What does a letter mean?
+
+The weighted total of the five scores out of 100: A at 85 and above, B at 70, C at 55, D at 40, E
+below. The letter is a summary. The finding is the five scores and the evidence line under each, so
+two B trades can be a friction problem and a discipline problem and read nothing alike.
+
+## Why are there so few trades in the demo?
+
+Because the record is short, and the desk shows the record rather than padding it. The bundle on
+the desk holds 5 round trips over four minutes of a simulated agent's ledger, in RNVDAUSDT,
+RVOOUSDT, RMUUSDT and RQQQUSDT. Every screen scales with the record: point the same command at a
+longer ledger or at an account with a year of history and the shelf, the patterns and the checklist
+grow with it.
+
+## What needs a key?
+
+Only three things, and none of them is the core walk. A read-only Bitget key for an account review.
+An Anthropic key for the reasoning score and for the model to write an answer; without it the
+evidence table writes the answer itself. A Finnhub key for the earnings and macro calendars;
+without it the feed still reads SEC EDGAR and GDELT, which need no key. Every Bitget market read,
+the whole review of a ledger, the gate and the dry run work with an empty `.env`.
+
+## How does it use Bitget?
+
+Three ways, and take any of them out and there is no product. The record of a real account comes
+through Agent Hub read verbs. The context every grade is built from is Bitget market data: candles,
+order books, instruments, funding, tickers. And the checklist ends at the Agent Hub dry run. The
+whole idea only makes sense on an exchange that lists tokenized stocks trading around the clock,
+which is what makes divergence from the last regular close a thing worth grading at all. The full
+table is in [the Bitget verbs](/docs/developers/bitget-calls).
+
+## What is Kaaval?
+
+The sister project: a trading agent that runs against live Bitget market data and writes every
+decision, order, fill and equity mark into a signed, hash-chained ledger. Vidiyal reviews that
+ledger, and vendors Kaaval's Bitget, news and ledger modules so this repo runs on its own. Kaaval
+is one source of record, not a requirement: a Bitget account is the other.

@@ -1,0 +1,35 @@
+---
+title: "Read a pattern card"
+---
+
+A pattern is a detector over the whole trade table, not over one trade. `/patterns` shows one card
+per detector that fired.
+
+## What is on a card
+
+- **The name**, one of the nine detector ids.
+- **The description**, what this detector claims when it fires. For `fee-bleed`: friction took
+  more than a fifth of everything the period moved.
+- **The trades that prove it.** Every card names them and links to them. A card with no trades
+  behind it cannot exist: the detector returns the ids or it returns nothing at all.
+- **The evidence lines**, the numbers that fired it. From the demo bundle:
+  `1.9765 USDT of fees, slippage and funding against 0.0491 USDT of gross, 4025.9 percent`.
+
+## The detectors that found nothing
+
+The names of every detector that ran are listed on the same page. That matters more than it looks:
+a page with no cards and no list could mean a clean record or a detector that never ran, and those
+are not the same thing. The bundle on the desk shows 9 detectors run and 1 fired.
+
+## The one card that reads differently
+
+`added-while-under-water` proves itself with fills rather than round trips, because an add is a
+second entry into a position that is still open and inside a single trip it cannot be seen. The
+review carries its proof back to the trips that hold those fills before the card is drawn, so the
+card still names trades.
+
+## Why a pattern matters
+
+Every pattern that fires becomes one checklist item, and that item is what the gate runs against
+the live market before the next order. A card is not a scolding. It is the reason a line exists on
+[the checklist](/docs/guides/use-the-checklist).

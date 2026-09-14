@@ -1,0 +1,50 @@
+---
+title: "Why Bitget's tech is the heart"
+label: "Why Bitget is the heart"
+---
+
+Take Bitget out of Vidiyal and there is no product left. Three things depend on it and none of
+them has a substitute in this design.
+
+## The record comes through Agent Hub
+
+An account review reads real fills, real fees and a real balance through Agent Hub read verbs:
+`order` fills 30 days per call across both product lines, `account_overview` for total equity now,
+and `funds_records` financial rows for the balance changes the equity curve is walked back from.
+That is the whole source of truth for a person's review. There is no upload, no CSV, no form to
+type into, because a typed record is a memory and Vidiyal grades the record instead of the memory.
+
+The reader is `src/ingest/account.ts` and it is read-only by construction: the SDK picks the
+credentials out of the environment, `createBitget()` builds the tool surface read-only, and no
+write verb is reachable from that file.
+
+## The context comes from Bitget market data
+
+A grade is only worth reading because the market at that moment is rebuilt around the trade.
+Every one of those numbers is a Bitget public read:
+
+- `candlesHistory` for the last regular close before the entry, the divergence at entry and exit,
+  and whether a stop was crossed while the position was open.
+- `orderbook` for the depth behind the cost estimate.
+- `instruments` for quantity precision and the base coin, so a previewed order is sized the way
+  Bitget wants it.
+- `fundingRate` and `fundingRateHistory` for the funding a perpetual paid, charged into cost drag.
+- `tickers` for the live price the gate sizes an idea against.
+
+These need no key and no account, which is why a judge can run the proof command on a fresh
+checkout and still get real numbers.
+
+Tokenized stocks are the reason the review has anything interesting to say. Bitget lists them and
+they trade around the clock while the US market is shut, so the price walks away from the last
+regular close and re-anchors at the open. Divergence, the session clock and the 09:25 to 09:40 ET
+re-anchoring window are Bitget-specific facts, and three of the nine detectors are about them.
+
+## The gate ends at the Agent Hub dry run
+
+A checklist that only prints advice is an opinion piece. This one ends at
+`order` / `place` with `dryRun: true`, so a passing idea produces the exact request Bitget would
+receive, and the SDK hands it back rather than sending it. The preview is built in its own
+function against its own config, so the read-only context the rest of Vidiyal uses can never be
+the one holding a write verb.
+
+That is the line the product is built on: everything up to the order, nothing past it.

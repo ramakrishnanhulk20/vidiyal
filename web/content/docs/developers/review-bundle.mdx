@@ -1,0 +1,178 @@
+---
+title: "The ReviewBundle format"
+label: "ReviewBundle"
+---
+
+One shape, read by the desk and by the question answerer, so an answer can always be traced back
+to a graded trade and a trade back to a record. Write one of these and every screen works. The
+types are in `src/ask/types.ts` and `src/review/types.ts`.
+
+## ReviewBundle
+
+```ts
+interface ReviewBundle {
+  source: Source;
+  range: { fromTs: number; toTs: number };
+  graded: GradedTrade[];
+  patterns: PatternHit[];
+  checklist: ChecklistItem[];
+  equityCurve: Array<{ ts: number; equity: number }>;
+}
+```
+
+## Source
+
+```ts
+type Source =
+  | { kind: "ledger"; dir: string; brain: string }
+  | { kind: "account"; accountId: string };
+```
+
+Every fill carries its source, so a mixed table can always say which record a number came from.
+
+## FillRecord
+
+One execution. Nothing here is derived: every field is either in the record or absent.
+
+| Field | Type | Note |
+|---|---|---|
+| `id` | string | |
+| `source` | Source | |
+| `ts` | number | The fill's own timestamp, not the moment the line was written |
+| `category` | Category | `SPOT` or `USDT-FUTURES` |
+| `symbol` | string | |
+| `side` | "buy" or "sell" | |
+| `qty` | number | |
+| `price` | number | |
+| `notionalUsdt` | number | |
+| `feeUsdt` | number | |
+| `slippageBps` | number or null | Ledger fills only. Bitget does not publish the book a past fill hit |
+| `bookHash` | string or null | Ledger fills only |
+| `decisionId` | string or null | The decision that caused the fill, or the order id for an account |
+| `rationale` | string or null | The trader's or the agent's own words |
+| `note` | string or null | |
+
+## RoundTrip
+
+One position from open to close. `exitTs`, `exitPrice` and `grossPnl` are null while it is open,
+because an unrealised number is not a result.
+
+| Field | Type |
+|---|---|
+| `id` | string |
+| `source` | Source |
+| `category` | Category |
+| `symbol` | string |
+| `side` | "long" or "short" |
+| `entryTs` | number |
+| `exitTs` | number or null |
+| `entryPrice` | number |
+| `exitPrice` | number or null |
+| `qty` | number |
+| `grossPnl` | number or null |
+| `feesUsdt` | number |
+| `fundingUsdt` | number |
+| `slippageUsdt` | number |
+| `fills` | FillRecord[] |
+| `rationale` | string or null |
+| `equityAtEntry` | number or null |
+
+## TradeContext
+
+The market around one trade, rebuilt from Bitget and from the record, never guessed.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `divergenceAtEntryPct` | number or null | How far the round-the-clock price had walked from the last regular close at entry |
+| `divergenceAtExitPct` | number or null | The same at exit |
+| `spreadAtEntryBps` | number or null | |
+| `sessionAtEntry` | "regular", "after-hours", "weekend" or "holiday" | |
+| `msToNextOpenAtEntry` | number | |
+| `nextEventMinutes` | number or null | Minutes to the next scheduled event |
+| `bookShareAtEntry` | number or null | The share of the visible book the order took |
+| `usualSpreadBps` | number or null | |
+| `stop` | `{ existed, price, honoured }` | `honoured` is null when nothing in the record says |
+
+## Scores and GradedTrade
+
+```ts
+interface Scores {
+  entry: number;
+  sizing: number;
+  exit: number;
+  cost: number;
+  reasoning: number;
+  total: number;
+  letter: "A" | "B" | "C" | "D" | "E";
+  evidence: string[];
+}
+
+interface GradedTrade {
+  trade: RoundTrip;
+  context: TradeContext;
+  scores: Scores;
+}
+```
+
+`evidence` is the list of lines that produced the five numbers, one per component that had
+something to measure.
+
+## PatternHit, ChecklistItem, Idea, IdeaCheck
+
+```ts
+interface PatternHit {
+  pattern: string;
+  description: string;
+  trades: string[];
+  evidence: string[];
+}
+
+interface ChecklistItem {
+  id: string;
+  pattern: string;
+  text: string;
+  test: string;
+}
+
+interface Idea {
+  category: Category;
+  symbol: string;
+  side: "buy" | "sell";
+  notionalUsdt: number;
+  note: string | null;
+}
+
+interface IdeaCheck {
+  idea: Idea;
+  results: Array<{ item: ChecklistItem; pass: boolean; observed: string }>;
+  pass: boolean;
+  dryRun: Record<string, unknown> | null;
+  dryRunNote: string;
+}
+```
+
+## Answer
+
+What `answerQuestion()` returns, from `src/ask/answer.ts`.
+
+```ts
+interface Answer {
+  question: string;
+  narrative: string;
+  evidence: Array<{ ref: string; fact: string; value: string }>;
+  citedRefs: string[];
+  uncitedNumbers: string[];
+}
+```
+
+`ref` is always a round trip id, so there is no such thing in an answer as a number that belongs
+to nothing. A non-empty `uncitedNumbers` means the honesty check fired and `narrative` is the
+paragraph the table wrote for itself.
+
+## What the file on disk adds
+
+`scripts/review.ts` writes the bundle inside a wrapper with the facts the bundle has no field for:
+`generatedAt`, `publicKeyHex`, `publicKeyPath`, `verification` (verified, reason, fills, decisions,
+marks), `tradeNotes` per round trip id (the headlines near the entry and the judge's sentence), and
+`detectorsRun`. The desk reads that wrapper as `ReviewRecord` in `web/lib/desk.ts`, where
+`tradeNotes` and `detectorsRun` are optional so an older bundle still renders.

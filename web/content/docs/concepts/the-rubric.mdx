@@ -1,0 +1,52 @@
+---
+title: "The rubric"
+---
+
+Five scores from 0 to 5 and a letter, per round trip. The weights and thresholds below are the
+constants in `src/review/grade.ts`, and the full text of each question is in `docs/rubric.md` in
+the repo.
+
+## The five scores
+
+| Score | Weight | Full marks at | Zero at |
+|---|---|---|---|
+| Entry context | 25 | Within 0.5 percent of the last regular close, spread at its usual level | 2 percent from the close, spread 3 times usual, or an entry inside the 09:25 to 09:40 ET re-anchoring window |
+| Sizing | 20 | At or under the cap: the rulebook percentage for an agent, the median size for a person, and a quarter of the visible book | Twice the cap, or 3 times the median size for a person |
+| Exit discipline | 25 | Stop honoured, loser held no longer than the winners' median, nothing added under water | Stop crossed and left open, loser held twice the winners' median, or a high divergence weekend entry carried into the open |
+| Cost drag | 15 | Friction under 10 percent of gross | Friction over 50 percent of gross, or a gross smaller than its costs |
+| Reasoning | 15 | The thesis names a cause that was observable at entry and the exit matched its horizon | The outcome is claimed as skill when the thesis was wrong. No note scores 2, never 0 |
+
+Between the full-marks level and the zero level every threshold slides in a straight line, which
+is the `slide()` function in `grade.ts`.
+
+## The letters
+
+A at 85 and above, B at 70, C at 55, D at 40, E below. The total is the weighted sum of the five
+scores as a percentage, which is why the weights add to 100.
+
+## Two rules that stop a missing number from becoming a bad grade
+
+A component with nothing in the record to measure scores a neutral 2.5 and says so in its evidence
+line, rather than costing points. A trade with no written note scores 2 out of 5 on reasoning,
+never 0, because silence is not a mistake.
+
+A scheduled event within 60 minutes of an entry only costs points when no rationale was written.
+Naming the event is the difference between trading into it and walking into it.
+
+## Every score carries its number
+
+The grade is a list of evidence lines, not a verdict. Real lines from the bundle on the desk:
+
+```
+entry: price was 0.76 percent from the last regular close
+sizing: the order was 0.1 percent of the visible book against a 25 percent cap
+cost: 0.2262 USDT of friction against a gross of 0.0491 USDT, so friction was the whole trade
+```
+
+A score with no line behind it is a bug, not a design.
+
+## What the rubric does not do
+
+It does not predict. It does not know whether a trade was lucky. It grades process, and it says so
+on every surface, because a good process can lose and a bad one can win for a while. Profit and
+loss appears on the desk as a fact about the trade, never as the thing being graded.

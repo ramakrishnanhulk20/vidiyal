@@ -1,0 +1,16 @@
+{
+  "list": [
+    {
+      "tradeId": "1201000005",
+      "orderId": "9001000005",
+      "symbol": "TSLAUSDT",
+      "category": "USDT-FUTURES",
+      "side": "buy",
+      "price": "355.00",
+      "qty": "1",
+      "amount": "355.00",
+      "feeDetail": [{ "feeCoin": "USDT", "totalFee": "-0.2130" }],
+      "cTime": "1788544800000"
+    }
+  ]
+}

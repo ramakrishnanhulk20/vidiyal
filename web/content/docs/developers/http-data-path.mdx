@@ -1,0 +1,64 @@
+---
+title: "The HTTP data path"
+label: "HTTP data path"
+---
+
+The desk never reads a database and never calls Bitget from the browser. It reads one review
+bundle through one function, `loadReview()` in `web/lib/desk.ts`, and there are two ways that
+function can get one.
+
+## Off the disk
+
+The default. `loadReview()` reads `<VIDIYAL_DATA_DIR>/reviews/<VIDIYAL_REVIEW>.json`, with
+`VIDIYAL_DATA_DIR` defaulting to `../data/state` and `VIDIYAL_REVIEW` to `kaaval-claude`. This is
+the path when the desk and the engine sit on the same machine, which is how it runs under pm2 here.
+
+A missing file is an error, never an empty screen, and the error names the command that would write
+it:
+
+```
+no review at <path>. Run: npm run review -- --source kaaval --brain claude --out kaaval-claude
+```
+
+A desk that quietly shows nothing is indistinguishable from a trader who did nothing, and those are
+not the same thing.
+
+## Over HTTP, with `VIDIYAL_RECORD_URL`
+
+Set `VIDIYAL_RECORD_URL` and `loadReview()` fetches instead of reading the disk. That is the path
+on a host like Vercel, where there is no engine folder and no state directory: the machine that
+watches the ledger runs [the review loop](/docs/guides/refresh-reviews), the same JSON is served
+from a public URL, and the desk reads it.
+
+| | Where |
+|---|---|
+| One bundle | `<VIDIYAL_RECORD_URL>/vidiyal/reviews/<name>.json` |
+| The manifest | `<VIDIYAL_RECORD_URL>/vidiyal/manifest.json` |
+
+A trailing slash on the variable is trimmed, so either form works. Responses are cached for 60
+seconds through Next's own revalidate hint: the loop rebuilds hourly, so a minute is never the
+reason a number is stale, and it keeps every screen a reader opens from costing a round trip to the
+origin.
+
+The rules of the file path hold here too. A bundle that will not load is an error, and the error is
+useful: the manifest is read only when a fetch fails, so the normal page view costs one request, and
+a reader who asked for a name nobody published is told which names exist and when they were
+generated rather than shown a blank shelf. When the manifest is missing as well, the message says to
+check `VIDIYAL_RECORD_URL`.
+
+## What travels and what does not
+
+A bundle is a plain JSON file with no secret in it: trades that already happened, the grades over
+them, and the public half of the signing key. The engine's `.env` never travels, which is why the
+desk runs the gate and the ask scripts in the engine's own process instead of importing the engine.
+
+The copying is not done here. The review loop writes the bundles and the manifest into
+`data/state/reviews`, and Kaaval's publisher (`scripts/publish-record.ts` in that repo) copies them
+into a public record repository under `vidiyal/reviews/` with a `vidiyal/manifest.json` beside them,
+which is the layout the two URLs above expect. Nothing in this repo pushes anything anywhere.
+
+## The Postgres path, later
+
+`loadReview()` is also the seam for a database. The day the bundles move into Postgres the reads
+change inside `web/lib/desk.ts` and no screen changes, which is why every route is `force-dynamic`
+and nothing is baked into the build.

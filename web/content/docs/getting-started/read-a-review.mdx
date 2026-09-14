@@ -1,0 +1,48 @@
+---
+title: "Read a review"
+---
+
+A review is one bundle file and five screens over it. Open the desk at `http://localhost:3001` and
+read it in this order.
+
+## The shelf
+
+`/` stands every round trip on its spine, coloured by grade, newest first. A spine carries the
+ticker, the side, the letter, the total out of 100 and the entry and exit days.
+
+Under the shelf is the sources panel, and it is the part to read first: which record this is
+(a simulated Kaaval brain, or a read-only Bitget account), the range, the public key the ledger
+was checked against, whether the chain verified, and when the bundle was written. A review that
+will not say what it read is not worth reading.
+
+## One trade
+
+`/trades/<round trip id>` leads on the letter, then the five scores, each carrying the line that
+produced it. From the bundle on the desk today:
+
+```
+entry: price was 0.76 percent from the last regular close
+entry: spread was 1.8 bps against a usual 1.8 bps, 1.00 times
+entry: 04:21 ET is outside the 09:25 to 09:40 ET re-anchoring window
+```
+
+Below the scores are the signed fills, the market rebuilt around the entry (divergence at entry
+and exit, the session, the spread, the share of the visible book the order took, the stop), the
+headlines the feed found in that window, and the judge's own sentence about the trader's note.
+A score with no line behind it is a bug, not a design.
+
+## The patterns
+
+`/patterns` is one card per detector that fired, with the trades that prove it. The detectors that
+ran and found nothing are named on the same page, so you can tell a clean record from a detector
+that never ran. The bundle on the desk has one card, `fee-bleed`, proved by all 5 trades, out of
+9 detectors.
+
+## The checklist
+
+`/checklist` is the item each pattern became, with the test the gate will run against the live
+market. One pattern, one item. On this bundle that is `cost-under-20-bps`, out of `fee-bleed`.
+
+Nothing on that list was chosen by hand. It is what the record earned.
+
+Next: [hold an idea against it](/docs/getting-started/hold-an-idea).

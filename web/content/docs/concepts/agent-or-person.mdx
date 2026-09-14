@@ -1,0 +1,41 @@
+---
+title: "Reviewing an agent versus a person"
+label: "Agent or person"
+---
+
+Two sources of record, one trade table, one rubric. What changes is how much the record can tell
+the rubric about intent.
+
+| | A Kaaval ledger | A Bitget account |
+|---|---|---|
+| Read by | `src/ingest/ledger.ts` | `src/ingest/account.ts` |
+| Checked first | Hash chain and Ed25519 signature against a 64 character public key. A broken chain stops the review, it does not warn | Nothing to check: Bitget is the authority for its own fills |
+| Needs a key | No. The ledger and its public key are files | Yes, a read-only Bitget API key |
+| Fills carry | The order book the fill hit, the decision that caused it, the rulebook checks it passed, and the agent's own written rationale | Price, quantity, fee, and the client order id as a note. Slippage and the book are null, because Bitget does not publish the book a past fill hit |
+| Equity | The marks the agent wrote at each tick | Walked back from the total equity `account_overview` reports now, using the `funds_records` balance changes |
+| Sizing is judged against | The rulebook caps: 10 percent of equity per symbol and a quarter of the visible book | The trader's own median size over the period, with 3 times the median scoring 0 |
+| Stops | The rulebook stop distance, so a crossed stop is a fact | No stop in the record unless the trader set one |
+| Reasoning | The rationale in the ledger, graded by the model against four fixed questions | Usually nothing, which the rubric scores 2 out of 5, never 0 |
+| Label on the desk | "simulated record, Kaaval brain claude" | "read-only, Bitget account" and the account id |
+
+## Why both exist
+
+The agent side is what makes a demo provable: a signed ledger can be verified in front of a judge,
+and the same five scores fall out of it as would fall out of a human account. The person side is
+the product: most people who trade tokenized stocks on Bitget at 3 a.m. are not running an agent,
+and their record is already sitting in the exchange.
+
+Neither path is graded more gently than the other. A missing input never costs points: the
+component scores a neutral 2.5 and says so in its evidence line.
+
+## What has not been proven yet
+
+The account path is written and typechecked, and nothing in this repo has run it against a real
+Bitget key, because no read-only key exists yet. `npm run proof:review` says so out loud rather
+than showing a demo account review:
+
+```
+account review skipped: no BITGET_API_KEY
+```
+
+See [review a Bitget account](/docs/guides/review-a-bitget-account).

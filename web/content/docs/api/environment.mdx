@@ -1,0 +1,44 @@
+---
+title: "Every environment variable"
+label: "Environment"
+---
+
+Nothing here is required to review a Kaaval ledger. `.env` is git ignored, `.env.example` carries
+every key with a one-line comment, and nothing in the repo logs a value.
+
+## The engine
+
+| Variable | Purpose | Default, and what happens without it |
+|---|---|---|
+| `BITGET_API_KEY` | Read-only account review | Empty. The proof prints `account review skipped: no BITGET_API_KEY` and reviews the ledger only |
+| `BITGET_SECRET_KEY` | The same | Empty |
+| `BITGET_PASSPHRASE` | The same | Empty |
+| `BITGET_ACCOUNT_ID` | A label for the account being reviewed, which Bitget never sees | The proof tags the record `bitget-account` |
+| `KAAVAL_LEDGER_DIR` | Which ledger directory to review | `npm run review` falls back to `../kaaval/data/state/ledger`, `npm run proof:review` to `../kaaval/data/state/ledger-demo` |
+| `KAAVAL_LEDGER_PUBLIC_KEY_HEX` | The Ed25519 public key the ledger is signed with, 64 hex characters. Public half only | Unset, so the key is read from a file |
+| `KAAVAL_LEDGER_PUBLIC_KEY_FILE` | Where to read that hex from, when it is not passed as `--pubkey`. The review loop uses this one | `../kaaval/data/secrets/ledger-key.pub.hex` |
+| `KAAVAL_LEDGER_PUBLIC_KEY_PATH` | The older name for the same thing, still read when `KAAVAL_LEDGER_PUBLIC_KEY_FILE` is unset | `../kaaval/data/secrets/ledger-key.pub.hex` |
+| `VIDIYAL_REVIEW_MINUTES` | How often the review loop rebuilds every brain's bundle | 60 |
+| `KAAVAL_BRAIN` | Which brain in the ledger to review | `claude` |
+| `ANTHROPIC_API_KEY` | The reasoning score and the written answer | Unset. A trade with a note is left ungraded rather than guessed at, and the evidence table writes the answer itself |
+| `KAAVAL_CLAUDE_MODEL` | Which Claude model to use | `claude-sonnet-5` |
+| `FINNHUB_API_KEY` | Company news and the earnings and macro calendars | Unset. The feed still reads SEC EDGAR and GDELT, which need no key |
+| `KAAVAL_USER_AGENT` | The contact address SEC asks every caller to send | A placeholder in the vendored code. EDGAR refuses a request it does not recognise, so set it |
+| `KAAVAL_HTTP_TIMEOUT_MS` | How long one news, SEC or GDELT request may take, headers and body together | 20000 |
+| `KAAVAL_BITGET_TIMEOUT_MS` | How long one Bitget request may take. The SDK retries a read twice on top of this | 15000 |
+| `QWEN_API_KEY`, `QWEN_BASE_URL`, `QWEN_MODEL` | Read by the Qwen client in `src/vendor/llm.ts`, which is an alternative to Claude behind the same `LlmClient` interface | Nothing in this repo constructs that client today, so these are unused unless you wire it |
+
+## The desk, in `web/`
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `VIDIYAL_DATA_DIR` | Which state folder holds the review bundles | `../data/state` |
+| `VIDIYAL_REVIEW` | Which bundle the screens read | `kaaval-claude` |
+| `VIDIYAL_ENGINE_DIR` | The engine folder the desk runs the gate and the ask scripts from | the parent of `web/` |
+| `VIDIYAL_RECORD_URL` | Serve the bundles over HTTP instead of reading the disk. The desk then fetches `<url>/vidiyal/reviews/<name>.json` and, when that fails, `<url>/vidiyal/manifest.json` | unset, so the desk reads the filesystem |
+
+Those two scripts run in their own process, so the Bitget and Anthropic keys stay in the engine's
+`.env` and never reach the server that renders pages.
+
+The docs at `/docs` read no variable of their own. They are part of the desk, and they are built
+from the files in `web/content/docs`.

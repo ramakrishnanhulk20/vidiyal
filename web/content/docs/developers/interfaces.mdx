@@ -1,0 +1,64 @@
+---
+title: "NewsProvider and RationaleJudge"
+label: "Interfaces"
+---
+
+Two one-method interfaces, and they are the reason the whole review runs in a test with no network
+and no model.
+
+## RationaleJudge
+
+```ts
+interface RationaleJudge {
+  score(trip: RoundTrip, context: TradeContext): Promise<{ score: number; reason: string }>;
+}
+```
+
+Two implementations ship in `src/review/judge.ts`:
+
+- `ModelJudge`, which puts the trader's own note to a model against four fixed questions: the
+  thesis names a cause, the cause was observable at entry, the exit matched the horizon the thesis
+  implied, and the outcome is not claimed as skill when the thesis was wrong. It replies with one
+  JSON object, a score from 0 to 5 and one sentence naming which question decided it.
+- `SilentJudge`, for a run with no model key. A trade with no note scores 2, which is the rubric's
+  own floor. A trade that does have a note makes it throw `NoJudgeError` naming the trip, rather
+  than returning a quiet default, because an ungraded thesis dressed as a grade is worse than a
+  gap. The review script catches that and records the trade as ungraded.
+
+The note is framed as quoted evidence and never as an instruction. A note that tries to order a
+score is itself a finding about the trader, and the judge is told to say so and carry on.
+
+## NewsProvider
+
+Defined in `src/review/context.ts` and built by `newsProvider()` in `src/review/news.ts`. One
+method, and it answers for a moment in the past with the headlines and the scheduled events around
+it:
+
+```ts
+interface NewsProvider {
+  eventsNear(ts: number, symbol: string): Promise<Array<{ ts: number; title: string }>>;
+}
+```
+
+Sources are the vendored Kaaval feed: SEC EDGAR and GDELT always, because neither needs a key, and
+Finnhub for company news and both calendars when `FINNHUB_API_KEY` is set. A source that is missing
+or refuses is skipped inside the feed and written to the log, so a review never stops because a
+news host is down and never invents an event.
+
+The window around an entry is six hours back and one hour forward: back far enough to catch the
+overnight story a trade was reacting to, forward far enough to catch the headline that landed while
+the position was being built.
+
+Every gather is bucketed to the hour of the trade and held for the life of the process, so a record
+with twelve trips in the same name and the same hour costs one query per source rather than twelve.
+That bucket is also what keeps GDELT to at most one query per underlying per hour, which is what it
+will answer without a 429.
+
+The two feed functions are injectable, so a test can prove the windowing and the pacing without
+touching SEC, GDELT or Finnhub.
+
+## Why this matters to the tests
+
+`grade/` and `patterns/` are already pure. With these two interfaces faked, the context builder and
+the review pipeline are testable against recorded Bitget responses, which is how the suite runs in
+about a second and touches nothing.

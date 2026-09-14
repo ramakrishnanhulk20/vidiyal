@@ -1,0 +1,322 @@
+@import "tailwindcss";
+@import "lenis/dist/lenis.css";
+
+@theme {
+  --color-ground: #14100d;
+  --color-ground-deep: #0c0908;
+  --color-bone: #ede6dc;
+  --color-dawn: #ff7d55;
+
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-body: var(--font-plex-sans), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+:root {
+  --grain-opacity: 0.16;
+  --spine-w: min(680px, 52vw);
+  --spine-h: 58px;
+  --spine-gap: 70px;
+  --spine-depth: 16px;
+  --shelf-tilt: 40deg;
+  --shelf-turn: -9deg;
+  --shelf-lift: 0px;
+}
+
+html {
+  background-color: var(--color-ground-deep);
+}
+
+body {
+  min-height: 100svh;
+  background-color: var(--color-ground);
+  color: var(--color-bone);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* The ground is not flat black: a low warm wash sits behind everything, like a room
+   lit from one window. */
+.room {
+  background:
+    radial-gradient(120% 80% at 72% 8%, rgba(72, 52, 40, 0.55) 0%, rgba(20, 16, 13, 0) 58%),
+    radial-gradient(90% 60% at 8% 96%, rgba(48, 35, 28, 0.45) 0%, rgba(20, 16, 13, 0) 62%);
+}
+
+.grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.86' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: var(--grain-opacity);
+  mix-blend-mode: overlay;
+}
+
+.shelf-stage {
+  perspective: 1500px;
+  perspective-origin: 58% 42%;
+}
+
+.shelf-rig {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--spine-w);
+  height: 0;
+  transform-style: preserve-3d;
+  transform: translate(var(--rig-x, -50%), calc(-50% + var(--shelf-lift)))
+    rotateX(var(--shelf-tilt)) rotateZ(var(--shelf-turn));
+}
+
+.spine-slot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  transform-style: preserve-3d;
+  transform: translate3d(
+    0,
+    calc((var(--i) - (var(--n) - 1) / 2) * var(--spine-gap)),
+    calc(var(--z) * var(--spine-depth))
+  );
+}
+
+.spine {
+  position: relative;
+  height: var(--spine-h);
+  border-radius: 3px;
+  border-left: 3px solid color-mix(in oklab, var(--grade) 78%, #0b0907);
+  background:
+    linear-gradient(
+      100deg,
+      color-mix(in oklab, var(--grade) 30%, #191310) 0%,
+      color-mix(in oklab, var(--grade) 52%, #1e1714) 44%,
+      color-mix(in oklab, var(--grade) 24%, #130f0c) 100%
+    );
+  box-shadow:
+    0 26px 34px -24px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 color-mix(in oklab, var(--grade) 62%, transparent),
+    inset 0 -8px 14px -10px rgba(0, 0, 0, 0.8);
+}
+
+/* The paper edge: the thin darker band that makes a flat bar read as a book. */
+.spine::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 7px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--grade) 10%, #0b0806) 0%,
+    #090706 100%
+  );
+}
+
+.spine:hover {
+  border-left-color: color-mix(in oklab, var(--grade) 85%, #0b0907);
+}
+
+/* The spine a reader has just come back from, held for a few seconds so the eye finds
+   its place in the stack again. */
+.spine-marked {
+  outline: 1px solid color-mix(in oklab, var(--color-dawn) 62%, transparent);
+  outline-offset: 3px;
+}
+
+/* Off centre on a wide screen: the stack hangs from the right so its near ends stay clear
+   of the headline and both ends of every spine can still be read. */
+@media (min-width: 768px) {
+  .shelf-stage {
+    perspective-origin: 58% 42%;
+  }
+
+  .shelf-rig {
+    left: auto;
+    right: 6vw;
+    --rig-x: 0%;
+  }
+}
+
+/* The side-hung layout on a window under about 1366. The rig hangs from the right edge,
+   so a narrower spine buys clearance from the headline on its left rather than from the
+   window edge on its right. The turn that decides the right edge is set in shelf.tsx;
+   these are the values a reader who has asked for no motion sees, and they have to fit
+   on their own because nothing animates them. */
+@media (min-width: 768px) and (max-width: 1365px) {
+  :root {
+    --spine-w: min(520px, 46vw);
+    --spine-gap: 60px;
+    --shelf-tilt: 34deg;
+    --shelf-turn: -6deg;
+    --spine-depth: 12px;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --spine-w: min(560px, 82vw);
+    --spine-h: 52px;
+    --spine-gap: 64px;
+    --spine-depth: 7px;
+    --shelf-tilt: 16deg;
+    --shelf-turn: -3deg;
+  }
+
+  .shelf-stage {
+    perspective: 900px;
+    perspective-origin: 50% 46%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --shelf-tilt: 34deg;
+    --shelf-turn: -8deg;
+    --shelf-lift: 0px;
+  }
+}
+
+/* The docs at /docs. Everything the MDX cannot carry a class on: the code blocks shiki
+   colours for us, the bullets, the scrollbars and the diagrams. */
+
+.docs-shell {
+  padding-bottom: 6rem;
+}
+
+@media (min-width: 768px) {
+  .docs-shell {
+    padding-bottom: 0;
+  }
+}
+
+.docs-prose > :first-child {
+  margin-top: 0;
+}
+
+.docs-prose ul > li {
+  position: relative;
+  padding-left: 1.6rem;
+}
+
+.docs-prose ul > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.78em;
+  width: 0.7rem;
+  height: 1px;
+  background: color-mix(in oklab, var(--color-dawn) 65%, transparent);
+}
+
+.docs-prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  letter-spacing: 0.01em;
+  color: color-mix(in oklab, var(--color-bone) 92%, transparent);
+  background: rgba(237, 230, 220, 0.07);
+  border-radius: 4px;
+  padding: 0.14em 0.38em;
+  word-break: break-word;
+}
+
+.docs-prose pre {
+  margin-top: 1.75rem;
+  overflow-x: auto;
+  border: 1px solid rgba(237, 230, 220, 0.1);
+  border-radius: 8px;
+  background-color: var(--color-ground-deep) !important;
+  padding: 1.15rem 1.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  tab-size: 2;
+}
+
+.docs-prose pre code {
+  display: block;
+  width: fit-content;
+  min-width: 100%;
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+.docs-prose figure {
+  margin-top: 1.75rem;
+}
+
+.docs-prose figure > pre {
+  margin-top: 0;
+}
+
+/* A rail that is there when the pointer is over it and out of the way when it is not. */
+.docs-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(237, 230, 220, 0.12) transparent;
+}
+
+.docs-scroll::-webkit-scrollbar,
+.docs-prose pre::-webkit-scrollbar,
+.docs-table-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.docs-scroll::-webkit-scrollbar-thumb,
+.docs-prose pre::-webkit-scrollbar-thumb,
+.docs-table-scroll::-webkit-scrollbar-thumb {
+  background: rgba(237, 230, 220, 0.14);
+  border-radius: 999px;
+}
+
+.docs-mermaid svg {
+  max-width: none;
+  height: auto;
+}
+
+.docs-mermaid svg .nodeLabel,
+.docs-mermaid svg .edgeLabel,
+.docs-mermaid svg .messageText,
+.docs-mermaid svg text {
+  font-family: var(--font-body) !important;
+}
+
+.docs-mermaid svg .edgeLabel {
+  font-size: 0.78em;
+}
+
+/* The landing story at /story. The five scores are walked one per screen while the panel
+   is pinned, and the walk is a single number the pin writes on the panel, so the rows
+   resolve in CSS and React never renders a frame of it.
+
+   The walk is measured in screens: --span is how many screens the pin lasts and --n how
+   many scores there are. Each row is most of the way through its own screen when the next
+   one starts, and the letter lands in the tail that is left over. The head start of four
+   tenths is so the first score is already there the moment the panel is caught, rather
+   than the reader arriving at an empty column.
+
+   At rest every row is fully there. The pinned attribute is set by the panel after it has
+   mounted and only on a window wide enough to pin, so the server's markup, a narrow
+   window and a reader who asked for less motion all show the same five rows. */
+.story-scores[data-pinned="true"] .story-score {
+  opacity: clamp(0, calc(var(--p, 0) * var(--span) - var(--i) + 0.4), 1);
+  transform: translateY(calc((1 - clamp(0, calc(var(--p, 0) * var(--span) - var(--i) + 0.4), 1)) * 18px));
+  will-change: opacity, transform;
+}
+
+/* The letter resolves last, in the tail after the final score, so a reader sees what the
+   rubric read before they see what it added up to. */
+.story-scores[data-pinned="true"] .story-letter {
+  opacity: clamp(0, calc((var(--p, 0) * var(--span) - var(--n)) / 0.6), 1);
+  transform: translateY(
+    calc((1 - clamp(0, calc((var(--p, 0) * var(--span) - var(--n)) / 0.6), 1)) * 14px)
+  );
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story-scores[data-pinned="true"] .story-score,
+  .story-scores[data-pinned="true"] .story-letter {
+    opacity: 1;
+    transform: none;
+  }
+}

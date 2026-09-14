@@ -1,0 +1,95 @@
+---
+title: "Quick start"
+---
+
+Vidiyal is two programs in one repo. The engine reads a trading record and writes a review
+bundle. The desk is a Next.js site that reads that bundle and runs the engine again when you
+hold an idea against the checklist or ask a question.
+
+## Install
+
+```bash
+npm install
+cp .env.example .env
+```
+
+Nothing in `.env` has to be filled in to review a Kaaval ledger. Every Bitget market read is
+public, and with no `ANTHROPIC_API_KEY` the reasoning score is left ungraded and the evidence
+table writes the answers itself. That is a normal state, not an error.
+
+Then the checks:
+
+```bash
+npm run typecheck
+npm test
+```
+
+The suite, run on 2026-09-12:
+
+```
+ Test Files  10 passed | 2 skipped (12)
+      Tests  116 passed | 3 skipped (119)
+```
+
+It takes about a second. Nothing in it touches the network: the Bitget responses are recorded
+fixtures and the model is a fake.
+
+The two skipped files are the live ones. `LIVE=1 npm test` adds them and calls the public Bitget
+API and the news hosts for real.
+
+## Run a review against a Kaaval ledger
+
+A signed ledger and its public key are not in this repo, so this command needs the Kaaval
+checkout sitting beside it:
+
+```bash
+npm run review -- --source kaaval --brain claude \
+  --ledger ../kaaval/data/state/ledger \
+  --pubkey ../kaaval/data/secrets/ledger-key.pub.hex \
+  --out kaaval-claude
+```
+
+It verifies the hash chain and the Ed25519 signature first and stops if either fails, then pairs
+fills into round trips, rebuilds the market around each entry from Bitget candles, pulls news and
+scheduled events in that window, grades every trip, runs nine detectors, turns the patterns into
+checklist items, and writes `data/state/reviews/kaaval-claude.json`.
+
+The bundle on the desk today, read from that file: a simulated Kaaval record for brain `claude`,
+2026-09-11T08:21:29Z to 2026-09-11T08:25:51Z, 5 round trips in RNVDAUSDT, RVOOUSDT, RMUUSDT and
+RQQQUSDT graded four B and one C, one pattern fired (`fee-bleed`) out of nine detectors run, one
+checklist item, ledger verified over 5 fills, 20 decisions and 20 equity marks.
+
+## Prove the whole pipeline in one command
+
+```bash
+npm run proof:review
+```
+
+It runs against the demo ledger and live Bitget data and prints every number it used: the ledger
+check, each trade with its five scores and the evidence line behind each, the detectors that fired
+and the ones that did not, the checklist, one idea held against that checklist, the Agent Hub dry
+run, and one question answered over the evidence table.
+
+## The desk
+
+```bash
+cd web
+npm install
+npm run dev        # http://localhost:3001
+```
+
+On this machine the desk stays up under pm2 as `vidiyal-web`, started from `web/` the way
+`pm2 jlist` reports it:
+
+```bash
+cd web
+pm2 start node --name vidiyal-web -- node_modules/next/dist/bin/next dev -p 3001
+```
+
+The desk reads bundle files and never calls a third-party API from the browser. Three variables
+steer it: `VIDIYAL_DATA_DIR` (default `../data/state`), `VIDIYAL_REVIEW` (default `kaaval-claude`)
+and `VIDIYAL_ENGINE_DIR` (default the parent of `web/`). The gate and the ask page run the engine
+in its own process, so the Bitget and Anthropic keys stay in the engine's `.env` and never reach
+the server that renders pages.
+
+Next: [read a review](/docs/getting-started/read-a-review).

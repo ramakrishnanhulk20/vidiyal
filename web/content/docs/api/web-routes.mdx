@@ -1,0 +1,41 @@
+---
+title: "The web routes"
+label: "Web routes"
+---
+
+Every route is `force-dynamic`: the desk reads the record as it stands when the page is requested,
+never as it was at build time. Nothing on any screen is hardcoded.
+
+| Route | Reads | Runs |
+|---|---|---|
+| `/` | `loadReview()`, then `toDesk()`: every graded trip as a spine, plus the source, range, count and ledger check lines | Nothing |
+| `/trades/[id]` | `gradedById()` for the five scores, their evidence lines, the fills and the context, and `noteFor()` for the headlines near the entry and the judge's sentence. An id the bundle does not hold returns a 404 | Nothing |
+| `/patterns` | `bundle.patterns` for the cards, `detectorsRun` for the detectors that found nothing | Nothing |
+| `/checklist` | `bundle.checklist`, with the pattern behind each item | Nothing |
+| `/gate` | `deskState()` and `symbolChoices()` from the bundle: the trips, the equity the record last marked, open and net exposure, and the instruments this record traded plus the engine's last universe | On submit, the `holdIdea` server action runs `checkIdea()` in the engine's process |
+| `/ask` | The bundle, for the suggestions it offers, which are built from the worst trade, the patterns that fired and the sessions these entries happened in | On submit, the `askDesk` server action runs `answerQuestion()` in the engine's process |
+| `/lab` | The bundle, for one spine per grade letter | Nothing. It is the design lab, marked no-index |
+
+## The two server actions
+
+Both go through `callEngine()` in `web/lib/engine-call.ts`, which spawns
+`web/scripts/engine-<name>.mts` under tsx from the engine folder, writes the payload to its stdin
+and reads JSON back from its stdout. The engine's own log lines go to stderr, and only the tail is
+shown, and only when the run failed.
+
+| | `gate` | `ask` |
+|---|---|---|
+| Payload | the idea, the checklist items, the desk state | the bundle and the question |
+| Returns | `IdeaCheck`: per-item pass or fail with the observed number, the verdict, the dry run request or null, and a note | `Answer` plus the model name and the lines the answerer wrote, including the one it writes when it discards a draft |
+| Time limit | 45 seconds | 90 seconds |
+| Input limits | a size of at least 10 USDT, which is Bitget's own floor for a tokenized stock order | a question of at most 300 characters |
+
+Running them in a separate process is the point: the engine is TypeScript that resolves the way
+Node does, which is not how the web bundler resolves, and the Bitget and Anthropic keys are read by
+the child from the engine's `.env` and never sit in the process that renders pages.
+
+## When something is missing
+
+A missing bundle raises with the command that would write it, rather than rendering an empty desk.
+A timeout says the run passed its limit and was stopped, and says plainly that nothing was sent
+anywhere.

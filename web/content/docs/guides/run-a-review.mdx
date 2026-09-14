@@ -1,0 +1,62 @@
+---
+title: "Run a review"
+---
+
+```bash
+npm run review -- --source kaaval --brain claude \
+  --ledger ../kaaval/data/state/ledger \
+  --pubkey ../kaaval/data/secrets/ledger-key.pub.hex \
+  --out kaaval-claude
+```
+
+## The flags
+
+| Flag | What it is | Default |
+|---|---|---|
+| `--source` | Which kind of record. Only `kaaval` is readable by this script today: an account review needs read-only Bitget keys | `kaaval` |
+| `--brain` | Which brain inside the ledger directory to read, since one directory can hold several | `KAAVAL_BRAIN`, else `claude` |
+| `--ledger` | The ledger directory | `KAAVAL_LEDGER_DIR`, else `../kaaval/data/state/ledger` |
+| `--pubkey` | A file holding the 64 character Ed25519 public key. Public half only | `KAAVAL_LEDGER_PUBLIC_KEY_HEX`, else the file at `KAAVAL_LEDGER_PUBLIC_KEY_FILE` or `KAAVAL_LEDGER_PUBLIC_KEY_PATH`, else `../kaaval/data/secrets/ledger-key.pub.hex` |
+| `--from`, `--to` | ISO dates that trim the fills before pairing | the whole ledger |
+| `--out` | The bundle name, written to `data/state/reviews/<name>.json` | `kaaval-<brain>` |
+| `--all` | Review every brain the ledger holds and write a `manifest.json` beside the bundles | off |
+| `--help` | Print the usage and stop | |
+
+## What it prints
+
+The ledger check first, and it stops there when the chain or the signature fails:
+
+```
+ledger verified: 5 fills, 20 decisions, 20 equity marks
+paired into 5 round trips, 0 fills skipped
+```
+
+Then one line per graded trade, `id`, side, symbol, letter and total, then the file it wrote with
+the counts: graded trades, patterns, checklist items, equity points, headlines and events near an
+entry, and how many detectors ran.
+
+## What it writes
+
+`data/state/reviews/<out>.json`, which holds more than the bundle itself: `generatedAt`, the
+public key and where it was read from, the ledger `verification` result, the `bundle`, the
+`tradeNotes` (headlines near each entry and the judge's own sentence), and `detectorsRun`, the
+name of every detector that looked, fired or not.
+
+The desk reads that file through `web/lib/desk.ts`. Point it at a different bundle with
+`VIDIYAL_REVIEW`.
+
+With `--all` it does the same for every brain that decided anything in the ledger and writes
+`data/state/reviews/manifest.json`: when it was generated, and one line per bundle with the name,
+the source, the range and how many trips it graded. The manifest is written last and only from
+bundles that landed, so a name in it always has a file behind it. A brain whose entries refuse to
+verify is left out and named in the log. That is the call [the review loop](/docs/guides/refresh-reviews)
+makes every hour.
+
+## When it costs a model call
+
+One call per round trip that carries a written note, and only when `ANTHROPIC_API_KEY` is set.
+With no key the reasoning score falls back to the no-note score of 2 and the run says so:
+
+```
+judge: none, so a written note is left ungraded
+```

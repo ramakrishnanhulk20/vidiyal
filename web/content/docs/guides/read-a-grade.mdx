@@ -1,0 +1,33 @@
+---
+title: "Read a grade"
+---
+
+A grade is five numbers and the lines that produced them. The letter is a summary, not the
+finding.
+
+## Read it in this order
+
+1. **The five scores, not the letter.** Two trades can both grade B for opposite reasons. The
+   shape of the five is the finding: a B that lost 25 points on cost drag is a friction problem,
+   a B that lost them on exit discipline is a discipline problem.
+2. **The evidence line under each score.** Every component prints the number that produced it.
+   `cost: 0.2262 USDT of friction against a gross of 0.0491 USDT, so friction was the whole trade`
+   is the grade. The 0 out of 5 is just its shadow.
+3. **The neutral lines.** `exit: nothing in the record measures this, so it scores a neutral 2.5`
+   means the record had nothing to judge, not that the exit was average. Neutral never costs
+   points and never earns them.
+4. **The reasoning line.** `reasoning: the judge scored the stated thesis 2 out of 5` came from a
+   model reading the trader's own note against four fixed questions. With no model key the line
+   says the note was left ungraded and the score holds at 2.
+
+## What the letter means
+
+A at 85 and above, B at 70, C at 55, D at 40, E below, on the weighted total out of 100.
+
+## What a grade is not
+
+It is not a prediction and it is not a claim about luck. A profitable trade can grade D and a
+losing trade can grade A, and both happen in the demo bundle: the worst-graded trip in it, C at
+60.9, is the one whose costs ate the gross.
+
+Profit and loss is shown as a fact about the trade. It is never an input to the first four scores.

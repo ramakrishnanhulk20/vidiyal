@@ -1,0 +1,75 @@
+---
+title: "Refresh reviews on a schedule"
+label: "Refresh reviews"
+---
+
+A review is a snapshot. Kaaval's ledger grows every fifteen minutes, so the snapshot has to be
+taken again on a schedule rather than by hand. A loop under pm2 rebuilds every brain's bundle each
+hour.
+
+## The loop
+
+`scripts/review-loop.ts` calls `reviewAll()`, which is the same code `npm run review -- --all`
+runs: every brain the ledger holds, graded, each written to
+`data/state/reviews/kaaval-<brain>.json`, and a `manifest.json` beside them naming what landed.
+
+```bash
+npx tsx scripts/review-loop.ts            # every hour, until you stop it
+npx tsx scripts/review-loop.ts --once     # one rebuild, then exit
+```
+
+The interval is `VIDIYAL_REVIEW_MINUTES`, 60 by default. The ledger directory is
+`KAAVAL_LEDGER_DIR`, and the public key is `KAAVAL_LEDGER_PUBLIC_KEY_HEX` when it is set, else the
+file at `KAAVAL_LEDGER_PUBLIC_KEY_FILE`. The loop names the file it trusted in its log rather than
+leaving it to a default nobody can see.
+
+## Under pm2
+
+`ecosystem.config.cjs` keeps it running across crashes and reboots:
+
+```bash
+pm2 start ecosystem.config.cjs
+pm2 logs vidiyal-review
+```
+
+The app is `vidiyal-review`, running tsx from the repo root, with its output in
+`data/state/logs/review-out.log` and `review-error.log`. No secret is in that config file: the loop
+reads `.env` itself through dotenv, so it is safe to publish.
+
+## What happens when something is down
+
+A rebuild that throws does not end the loop. Bitget, SEC or the model can all be down for an hour,
+and the bundles already on the shelf are still true, because each one says when it was generated
+and a reader can see for themselves that the shelf has gone stale. The error goes to the log and
+the next cycle looks again.
+
+A rebuild that goes silent is different. The loop's watchdog gives one cycle ten minutes, then logs
+that it is exiting and leaves with code 2, because a promise that is already stuck cannot be
+cancelled from the inside. pm2 starts a clean process, up to twenty times a minute apart, after
+which a person should look.
+
+A brain whose entries refuse to verify is left out of the manifest and named in the log. The
+manifest is written last and only from bundles that actually landed: a name in it with no file
+behind it would be a shelf promising a review nobody can open.
+
+## Why hourly
+
+The news feed buckets every gather to the hour and caches it to `data/state/news-cache`, so a
+rerun inside the same hour costs nothing at the news hosts. A full rebuild of both brains measured
+under a minute.
+
+## What a rerun costs
+
+Counted from the code paths, not metered against a bill:
+
+- Bitget, per round trip: two public candle reads for an open trip, three for a closed one, plus
+  one funding history read on a perpetual. Public endpoints, no key.
+- News, per company per hour of trading: at most one SEC EDGAR call, one GDELT query and two
+  Finnhub calls, plus one Finnhub macro calendar call per day of the range. Cached after the first.
+- The model: one call per round trip that carries a written note, and only when
+  `ANTHROPIC_API_KEY` is set.
+
+## Serving what it wrote
+
+A desk on the same machine reads those files directly. A desk somewhere else reads them over HTTP:
+see [the HTTP data path](/docs/developers/http-data-path).

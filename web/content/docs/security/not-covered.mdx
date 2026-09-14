@@ -1,0 +1,57 @@
+---
+title: "What is not covered"
+---
+
+Stated here rather than discovered later.
+
+## The model is a black box
+
+One of the five scores, reasoning, is a model reading a trader's own note against four fixed
+questions. The other four are pure functions and repeat exactly; that one does not. It can be
+inconsistent between runs, and there is no proof inside Vidiyal that its sentence matches its
+number. What the product guarantees is narrower: the score is bounded to 0 to 5, it is 15 percent
+of the total, a trade with no note scores 2 and never 0, and a trade with a note and no model is
+recorded as ungraded instead of guessed at.
+
+The written answer on the ask page is checked number by number, which catches invented quantities.
+It does not catch a claim with no number in it. A sentence that reasons badly about numbers that
+are all real will pass.
+
+## Grades are process, not outcome
+
+The rubric does not predict and does not know whether a trade was lucky. A profitable trade can
+grade D and a losing trade can grade A. Anyone reading a Vidiyal grade as a forecast is reading it
+wrong, which is why every surface says process.
+
+## The news feed is flaky by nature
+
+GDELT answers 429 to anything faster than about one query per underlying per hour, and its API host
+took 11 to 15 seconds just to complete a TCP handshake from this machine when that was measured on
+2026-09-08, which is why the vendored HTTP layer carries its own fallback path. SEC EDGAR refuses a
+request without a contact address in the user agent. Finnhub needs a key for the calendars.
+
+A source that is missing or refuses is skipped inside the feed and written to the log. The review
+does not stop and never invents an event, but a review run while GDELT is rate limiting has fewer
+headlines in it than the same review run an hour later, and a scheduled event that Finnhub did not
+return cannot cost a trade points on entry context.
+
+## The account path has not been run against a live key
+
+The Bitget account reader is written, typechecked and shares all of its downstream code with the
+ledger path, and it has never been run against a real read-only key, because none exists for this
+project yet. The proof command says so rather than showing a demo account review.
+
+## The tests do not cover everything
+
+The suite runs against recorded Bitget responses and a fake model, and it carries no credentials.
+So the network behaviour of the Bitget SDK, the news hosts and the model is covered only by the two
+`LIVE=1` files and by the proof command. The web pages have no tests of their own: what you see on
+screen is proven by the engine's tests and by the proof run, not by a browser test.
+
+## Out of scope entirely
+
+- Custody. Vidiyal never holds or moves funds.
+- Rate limiting and multi-user access on the desk. It is a single-user app today.
+- The Kaaval ledger's own key handling, which lives in that repo. Vidiyal only ever reads the
+  public half.
+- Anything past the dry run. Vidiyal stops at the request Bitget would have received.

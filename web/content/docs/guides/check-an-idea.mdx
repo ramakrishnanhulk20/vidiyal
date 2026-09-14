@@ -1,0 +1,45 @@
+---
+title: "Check an idea"
+---
+
+`/gate` takes an instrument, a side, a size in USDT and an optional note, and runs
+`checkIdea()` in the engine's own process.
+
+## What each test reads
+
+| Test | Passes when | What it reads |
+|---|---|---|
+| `no-reentry-after-loss` | No loss closed in this symbol in the last 30 minutes | The review's own trips |
+| `weekend-exposure-under-40` | Net exposure after this order is under 40 percent of equity, or the regular session opens within a day | The NYSE clock and the desk state |
+| `divergence-under-1pct` | The price is within 1 percent of the last regular close | Bitget candles. While the regular session is open the item stands down, because the two prices are the same tape |
+| `weekly-turnover-under-5x` | Turnover in the last 7 days including this order stays under 5 times equity | The review's own trips |
+| `no-stale-loser-open` | No position in this name is both a day old and under water | The trips, against the live last price |
+| `symbol-under-half-exposure` | This symbol stays under half of open exposure after the order | The trips |
+| `cost-under-20-bps` | Getting in and holding a day costs 20 basis points or less | Bitget order book, fee rate and funding rate |
+| `stop-not-already-crossed` | No open position here is past its stop, 3 percent on SPOT and 2 percent on perpetuals | The trips, against the live last price |
+| `by-hand` | Never automatically. It is reported as needing a person | Nothing |
+
+Every test prints the observed number beside its pass or fail, so a failure is a fact and not a
+verdict.
+
+## The two guards before anything runs
+
+An idea with a size that is not above zero is refused, and so is a desk state with no positive
+equity, because nothing can be sized against nothing. Both raise a `RangeError` rather than
+guessing.
+
+## What a pass produces
+
+`previewOrder()` asks Bitget for the instrument precision, sizes the order the way Bitget wants it
+(quote-sized for a SPOT market buy, base-sized otherwise), and calls the Agent Hub `order` verb
+with `dryRun: true`. The SDK answers with the request it would have sent, and that request is what
+the desk shows.
+
+If the SDK refuses to build the preview, the gate does not pretend: it returns the request body it
+assembled from the order tool schema and says in the note that the SDK did not preview it, with
+the reason.
+
+## What it never does
+
+It never sends an order. The preview is built in its own function against its own config, so the
+read-only context the rest of Vidiyal uses is never the one holding a write verb.

@@ -1,0 +1,40 @@
+---
+title: "The Bitget verbs Vidiyal calls"
+label: "Bitget verbs"
+---
+
+Every call goes through the Agent Hub SDK (`@bitget-ai/bitget-agent-sdk` 3.3.0), built read-only
+by `createBitget()` in `src/vendor/bitget/client.ts`. The one exception is the dry run, which is
+built in its own function so the read-only context can never be the one holding a write verb.
+
+| Agent Hub call | What Vidiyal does with it | Where |
+|---|---|---|
+| `market` / `candlesHistory` | The price at the last regular close before an entry, the divergence at entry and exit, and whether a stop was crossed while the position was open | `src/vendor/bitget/market.ts:206`, called from `src/review/context.ts:152` and `:224` |
+| `market` / `tickers` | The live price the gate sizes an idea against | `market.ts:97`, called from `src/checklist/gate.ts:57` |
+| `market` / `orderbook` | Book depth for the cost estimate behind the 20 basis point item | `market.ts:128`, called from `src/vendor/bitget/cost.ts:68` |
+| `market` / `instruments` | Quantity precision and base coin, so a previewed order is sized the way Bitget wants it | `market.ts:257` and `:270`, called from `gate.ts:239` |
+| `market` / `fundingRate` | Funding cost per day for a perpetual idea | `market.ts:306`, called from `cost.ts:135` |
+| `market` / `fundingRateHistory` | The funding a perpetual position actually paid while it was open, charged into cost drag | `market.ts:328`, called from `src/review/context.ts:127` |
+| `order` / `fills` | Real fills for an account review, 30 days per call, both product lines | `src/ingest/account.ts:35` |
+| `account_overview` | Total equity now, the anchor the equity curve is walked back from | `src/ingest/account.ts:54` |
+| `funds_records` / `financial` | Balance changes, so sizing can be graded against equity at the time | `src/ingest/account.ts:65` |
+| `order` / `place` with `dryRun: true` | The exact request Bitget would receive when an idea passes every checklist item. It is never sent | `src/checklist/gate.ts`, `previewOrder` |
+
+Market reads need no key and no account. Only the three account reads do, and they are read-only.
+
+## The failure rule
+
+`invoke()` in `src/vendor/bitget/client.ts` turns a call that comes back `ok: false` into a thrown
+`BitgetError` carrying the tool name, the arguments sent and the SDK's error payload. Nothing
+returns an undefined that becomes a NaN three layers later.
+
+## Timeouts
+
+One Bitget request is bounded by `KAAVAL_BITGET_TIMEOUT_MS`, 15000 milliseconds by default, and
+the SDK retries a read twice on top of that.
+
+## Discovering the schemas
+
+`npm run discover` asks the SDK for the schema of every verb Vidiyal touches and writes
+`docs/dev/account-schemas.md`. That file is regenerable and carries Bitget's own wording, so it is
+git ignored rather than committed.

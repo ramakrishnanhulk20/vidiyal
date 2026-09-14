@@ -1,0 +1,72 @@
+---
+title: "Review a Bitget account"
+---
+
+The same rubric, over a real account instead of an agent's ledger. Say this part plainly first:
+**this path has not been run against a live Bitget key yet**, because no read-only key exists for
+this project. Everything below is what the code does, and the day a key is added it is one run
+away from being proven.
+
+## Make a read-only key
+
+On Bitget, create an API key with read permissions only. Vidiyal never needs trade or withdraw
+rights: the only write verb it touches is the dry run, which is answered by the SDK and never
+sent.
+
+Put the three values in `.env`:
+
+```bash
+BITGET_API_KEY=
+BITGET_SECRET_KEY=
+BITGET_PASSPHRASE=
+BITGET_ACCOUNT_ID=      # a label for the record. Bitget never sees it
+```
+
+The SDK reads them out of the environment. Nothing in this repo passes a credential as an
+argument, and nothing logs one.
+
+## What gets read
+
+Three Agent Hub read verbs, in `src/ingest/account.ts`:
+
+- `order` / `fills`, 30 days per call, both product lines, `fetchAll` on. Bitget serves fills and
+  bills for the last 90 days.
+- `account_overview`, for total equity now, which is the anchor the equity curve is walked back
+  from. If the overview carries no total equity the reader raises rather than inventing a curve.
+- `funds_records` / `financial`, for the balance changes between then and now.
+
+No write verb is reachable from that file.
+
+## What it becomes
+
+The same `FillRecord` shape a ledger produces, so the trades, context, grade, patterns and
+checklist code does not know or care which record it is reading. Two fields are null for an
+account and not for a ledger: `slippageBps` and `bookHash`, because Bitget does not publish the
+book a past fill hit. The client order id is kept as the note.
+
+## Running it today
+
+`npm run review -- --source account` is refused on purpose, with the reason: that script reviews a
+Kaaval ledger, and an account review needs read-only Bitget keys.
+
+What does run is the account leg of the proof command. With no key it says so:
+
+```
+account review skipped: no BITGET_API_KEY
+```
+
+With a key set, it reads the last 7 days, pairs the fills into round trips and prints the counts:
+
+```
+account review: <n> fills over 7 days paired into <n> round trips, <n> skipped
+```
+
+That leg stops at the pairing today. Grading an account end to end means feeding those trips
+through the same context and grade calls the ledger path uses, with the trader's own median size
+as the sizing cap instead of the agent's rulebook.
+
+## What the tests cover
+
+Not this. The suite runs against recorded Bitget responses and carries no credentials, so the
+account path is covered by typechecking and by the shape of the shared code, not by a live run.
+That gap is named again in [what is not covered](/docs/security/not-covered).

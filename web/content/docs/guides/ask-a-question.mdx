@@ -1,0 +1,41 @@
+---
+title: "Ask a question"
+---
+
+`/ask` answers from the review in front of you and shows its working. The mechanism is in
+[the honesty check](/docs/concepts/the-honesty-check); this page is how to use it.
+
+## Questions the retrieval understands
+
+The filter looks for a symbol or its underlying (`RMUUSDT`, `RMU`, `MU`), a side (`long`,
+`short`), a grade letter (`grade C`), the words of a pattern that fired (`fee bleed`), or a word
+about time (`today`, `yesterday`, `week`, `overnight`, `weekend`).
+
+The page offers suggestions built from the record itself: the trade that graded worst, the
+patterns that actually fired, the sessions these entries happened in. A question the desk cannot
+answer from the bundle is never offered.
+
+## When nothing matches
+
+The five worst trades by total score answer instead. That is on purpose: a question asked of a
+review is nearly always a question about what went wrong.
+
+## Reading the answer
+
+Under the narrative is the evidence table, which is the entire world the model was given. Each row
+carries the round trip id it belongs to, so every sentence can be traced back to a trade and every
+trade back to a signed record.
+
+Under that are the cited references, and, when the check fired, the list of numbers the draft
+carried that no row holds. From `npm run proof:review` on 2026-09-12:
+
+```
+  cited refs: ledger-demo:4>ledger-demo:6, ledger-demo:4>open
+  numbers with no evidence behind them: none, every number in the answer came from a trade
+```
+
+## Limits worth knowing
+
+A question is trimmed to 300 characters. The answer is drawn from at most five trades. With no
+`ANTHROPIC_API_KEY` the evidence table writes the paragraph itself, which is plainer English and
+exactly as true. The engine run is given 90 seconds before the desk stops waiting and says so.

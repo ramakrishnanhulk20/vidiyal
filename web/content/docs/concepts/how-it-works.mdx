@@ -1,0 +1,69 @@
+---
+title: "How it works, record to checklist"
+label: "How it works"
+---
+
+One pass through the engine, in the order the code runs it.
+
+## 1. Read the record
+
+Either a Kaaval ledger or a Bitget account, and both come out as the same trade table.
+
+A ledger is verified before it is read: `src/ingest/ledger.ts` calls `verifyLedger` on the chain
+and the Ed25519 signature, and a failed check returns no fills and the reason, so a tampered or
+truncated record can never reach the table. A fill's timestamp is the fill's own, not the moment
+the line was appended, because every grade is about the market at that moment.
+
+An account is read through Agent Hub read verbs only: `order` fills, `account_overview` and
+`funds_records`. The reader is in `src/ingest/account.ts` and no write verb is reachable from it.
+
+## 2. Pair fills into round trips
+
+`src/review/trades.ts` pairs fills first in, first out into round trips, and attaches the equity
+the record marked at entry. A trip that never closed keeps a null exit and a null gross, because
+an unrealised number is not a result.
+
+## 3. Rebuild the market around each entry
+
+`src/review/context.ts` asks Bitget for the candles, the book and the funding around the entry and
+the exit, works out how far the round-the-clock price had walked from the last regular close, what
+the spread was against its usual level, which session the entry fell in, how much of the visible
+book the order took, and whether a stop was crossed while the position was open. The news feed
+adds the headlines and the scheduled events in the same window.
+
+Nothing here is guessed. A number the market cannot supply stays null and the rubric skips it.
+
+## 4. Grade
+
+`src/review/grade.ts` turns the trade and that context into five scores from 0 to 5 and a letter.
+The first four are pure functions: no network, no model, no clock of their own, so two runs over
+the same record give the same grades. The fifth reads the trader's own words and is the only one a
+model touches, behind the `RationaleJudge` interface.
+
+Every component carries the number that produced it, and a component with nothing to measure
+scores a neutral 2.5 rather than costing points.
+
+## 5. Find what repeats
+
+`src/review/patterns.ts` runs nine detectors over the whole trade table. Each returns the trips
+that prove it and the numbers that fired it. A detector with too little to work on returns
+nothing rather than a maybe, and the names of every detector that ran travel with the bundle, so a
+quiet page can be told apart from a detector that never ran.
+
+## 6. Turn patterns into a checklist
+
+`src/checklist/items.ts` maps each pattern that fired to one item with a test name. A pattern with
+no automatic test still becomes an item, marked for a human, because dropping it would quietly
+shrink the checklist the review just earned.
+
+## 7. Hold the next idea against it
+
+`src/checklist/gate.ts` runs those tests against the live market through the same Bitget calls the
+review used. When every item passes it calls the Agent Hub `order` verb with `dryRun: true`, and
+the SDK answers with the request it would have sent. That is where Vidiyal stops.
+
+## 8. Answer questions over what is left
+
+`src/ask/answer.ts` retrieves the trades a question names, builds an evidence table from those
+trades alone, and lets a model write the English, then checks every number in it back against the
+table. See [the honesty check](/docs/concepts/the-honesty-check).

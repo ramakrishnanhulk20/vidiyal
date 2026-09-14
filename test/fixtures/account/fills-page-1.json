@@ -1,0 +1,28 @@
+{
+  "list": [
+    {
+      "tradeId": "1201000001",
+      "orderId": "9001000001",
+      "symbol": "TSLAUSDT",
+      "category": "USDT-FUTURES",
+      "side": "buy",
+      "price": "381.21",
+      "qty": "2",
+      "amount": "762.42",
+      "feeDetail": [{ "feeCoin": "USDT", "totalFee": "-0.4574" }],
+      "cTime": "1788469200000"
+    },
+    {
+      "tradeId": "1201000002",
+      "orderId": "9001000002",
+      "symbol": "TSLAUSDT",
+      "category": "USDT-FUTURES",
+      "side": "sell",
+      "price": "374.55",
+      "qty": "2",
+      "amount": "749.10",
+      "feeDetail": [{ "feeCoin": "USDT", "totalFee": "-0.4494" }],
+      "cTime": "1788498000000"
+    }
+  ]
+}

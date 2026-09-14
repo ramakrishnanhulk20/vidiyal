@@ -1,0 +1,115 @@
+---
+title: "Architecture"
+---
+
+Three diagrams, the same three that are in `ARCHITECTURE.md` and the README in the repo.
+
+## What runs where
+
+The engine is one Node service. Records come in on the left, Bitget market data and the news feed
+give every trade its context, and everything a screen reads leaves through the store.
+
+```mermaid
+flowchart LR
+  subgraph sources[Records]
+    ledger[Kaaval ledgers<br/>signed JSONL per brain]
+    acct[Bitget account history<br/>fills, orders, positions, bills<br/>read-only key]
+  end
+  subgraph bitget[Bitget market data, public]
+    candles[candles, books, funding]
+    hours[session clock, divergence]
+  end
+  news[News and calendars<br/>Finnhub, SEC EDGAR, GDELT]
+  subgraph engine[Vidiyal engine, one Node service]
+    ingest[ingest/<br/>ledger and account readers]
+    trades[review/trades<br/>FIFO pairing into round trips]
+    context[review/context<br/>the market at entry and exit]
+    grade[review/grade<br/>the rubric, pure]
+    judge[review/judge<br/>rationale grading, LLM behind an interface]
+    patterns[review/patterns<br/>detectors, pure]
+    checklist[checklist/<br/>items, the gate]
+    ask[ask/<br/>questions over the structured record]
+  end
+  hub[Agent Hub SDK<br/>dry-run order preview]
+  store[(files now,<br/>Postgres later)]
+  web[web/ Next.js desk<br/>timeline, patterns, checklist, chat]
+  ledger --> ingest
+  acct --> ingest
+  ingest --> trades --> context
+  candles --> context
+  hours --> context
+  news --> context
+  context --> grade --> patterns --> checklist
+  context --> judge --> grade
+  checklist --> hub
+  grade --> store
+  patterns --> store
+  checklist --> store
+  store --> ask --> web
+  store --> web
+```
+
+Rules of the graph: `grade/` and `patterns/` are pure functions over the trade table and its
+context, with no network and no model, so two runs over the same record give the same grades.
+`judge/` is the only place a model reads a trader's own words, and it sits behind an interface so
+tests use a fake.
+
+## One research task, end to end
+
+From a question to a checklist item to an order that was never sent.
+
+```mermaid
+sequenceDiagram
+  participant U as trader
+  participant A as ask
+  participant I as ingest
+  participant R as review
+  participant C as checklist
+  participant H as Agent Hub
+  U->>A: "why did I lose on rTSLA overnight last week?"
+  A->>I: trades for rTSLA, last 7 days
+  I-->>A: round trips with fills
+  A->>R: context, grades, patterns for those trades
+  R-->>A: graded trades with evidence rows
+  A-->>U: the answer, every number tied to a trade id
+  A->>C: patterns that fired
+  C-->>U: three checklist items, with the trades behind each
+  U->>C: "buy rNVDA now, 300 USDT"
+  C->>C: each item against the live market and the account
+  C->>H: dry-run order request (no network write)
+  C-->>U: pass or fail per item, the exact order Bitget would receive
+```
+
+## Modules and what depends on what
+
+Vendored code is copied, never imported across repos, so this repo runs on its own from its
+README. The copies name their source commit in a header comment.
+
+```mermaid
+flowchart TD
+  vb[vendor/bitget<br/>copied from Kaaval]
+  vn[vendor/news<br/>copied from Kaaval]
+  vl[vendor/ledger<br/>types and verify, copied]
+  types[review/types]
+  ingestL[ingest/ledger] --> vl
+  ingestL --> types
+  ingestA[ingest/account] --> vb
+  ingestA --> types
+  trades[review/trades] --> types
+  context[review/context] --> vb
+  context --> vn
+  context --> trades
+  grade[review/grade] --> context
+  judge[review/judge] --> context
+  patterns[review/patterns] --> grade
+  items[checklist/items] --> patterns
+  gate[checklist/gate] --> items
+  gate --> vb
+  ask[ask/answer] --> grade
+  ask --> patterns
+  ask --> items
+```
+
+The direction of every arrow is a rule: nothing under `review/` reads the web app, and nothing in
+the web app imports the engine. The desk runs the engine in a separate process instead, which is
+what keeps the Bitget and model keys out of the process that renders pages.

@@ -1,0 +1,41 @@
+---
+title: "Hold an idea against it"
+label: "Hold an idea"
+---
+
+The checklist is only worth having if something runs it. That is the gate, at `/gate`.
+
+Pick an instrument, a side, and a size in USDT. The desk runs every checklist item against the
+market as it is right now, not as it was when the trade that taught the lesson was made, and
+prints the observed number beside each pass or fail.
+
+The instrument list is the symbols this review traded plus the universe the engine last built for
+itself. A symbol the desk offers that the engine does not trade is a promise the record cannot
+keep.
+
+## What a pass looks like
+
+When every item passes, the gate ends at the Agent Hub dry run: the exact request Bitget would
+receive. From `npm run proof:review` on 2026-09-12, pasted in the README:
+
+```
+Idea: buy RTSLAUSDT 300 USDT
+  pass  No entries while the price is more than 1 percent from the last regular close
+        RTSLAUSDT is -0.34 percent from the 2026-09-11T19:45:00.000Z anchor candle close of 365.44
+  pass  The round trip costs less than 20 basis points, a fifth of a one percent move
+        1.0 bps to get in and hold a day: 1.0 impact, 0.0 fee, no funding; Bitget publishes no taker fee rate for RTSLAUSDT, fees are not in the total
+  verdict: passes the checklist
+  Agent Hub previewed the order without sending it: 300.00 USDT of quote, which is how Bitget sizes a SPOT market buy
+  {"dryRun":true,"operationId":"placeOrder","method":"POST","path":"/api/v3/trade/place-order","riskLevel":"write","wouldSend":{"category":"SPOT","symbol":"RTSLAUSDT","side":"buy","orderType":"market","qty":"300.00","clientOid":"c3dff94f-418f-493e-b96f-e30b2b268563"}}
+```
+
+`riskLevel: write` with `dryRun: true` is the SDK saying this would have been an order and was not
+sent. Vidiyal never places one.
+
+## What a fail looks like
+
+One failing item is enough. The gate returns the per-item results, the verdict, and no order at
+all: the note says how many of how many items failed, and the dry run field is null. Nothing is
+built for an idea that did not pass, so there is no half-ready order sitting anywhere.
+
+Next: [ask a question](/docs/getting-started/ask-a-question).

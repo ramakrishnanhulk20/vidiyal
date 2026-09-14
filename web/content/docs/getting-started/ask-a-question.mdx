@@ -1,0 +1,35 @@
+---
+title: "Ask a question"
+---
+
+`/ask` answers questions about the review you are looking at, and shows the evidence it was
+allowed to use.
+
+Type something like "why did this account lose on rMU?". Three things happen, and only the last
+one is a model:
+
+1. Retrieval picks the trades your words name: a symbol, a side, a grade letter, the name of a
+   pattern that fired, or a word about time. It is a keyword filter written down in
+   `src/ask/answer.ts`, not a model, so you can tell exactly why a trade is in the answer. When
+   nothing matches, the five worst trades by score answer instead.
+2. The evidence table is built from those trades alone. One row per fact, each row carrying the
+   round trip id it belongs to: the trade, the grade, the result, the costs, every rubric line and
+   every pattern line that names the trade.
+3. The English is written from that table, by the model when there is a key, by the table itself
+   when there is not.
+
+## What the honesty note means
+
+After the model writes, every number in the answer is pulled out and matched by value against the
+numbers in the table. A number in the answer that no row holds means the model made it up. So does
+a citation to a trade id the table does not carry.
+
+When either happens, the draft is thrown away, the paragraph the table wrote for itself is shown
+instead, and the page says so out loud: it lists the invented numbers under
+`uncitedNumbers` and prints the replacement. Nothing is quietly corrected.
+
+So a Vidiyal answer can be clumsy English, but every number in it belongs to a trade that a signed
+record can produce. That check runs whether or not a model was used, and it is the reason the page
+exists.
+
+Next: [how it works, end to end](/docs/concepts/how-it-works).

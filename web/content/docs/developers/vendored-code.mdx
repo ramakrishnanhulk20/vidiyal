@@ -1,0 +1,38 @@
+---
+title: "The vendored code policy"
+label: "Vendored code"
+---
+
+Four folders under `src/vendor` are copies of Kaaval code, not imports:
+
+| Folder | What it is |
+|---|---|
+| `vendor/bitget` | The Agent Hub client, the market reads, the cost estimate, the divergence maths and the NYSE session clock |
+| `vendor/news` | The SEC EDGAR, GDELT and Finnhub feed, and the HTTP layer under it |
+| `vendor/ledger` | The ledger types, the chain and signature check, and the key reader |
+| `vendor/llm.ts` | The `LlmClient` interface with the Claude and Qwen clients behind it |
+| `vendor/sim` | The fill, order and order book types a Kaaval ledger is written in |
+
+## The rule
+
+Edit in Kaaval first, then copy here. Every copied file opens with one line naming where it came
+from and when:
+
+```ts
+// Copied from kaaval/src/bitget/client.ts on 2026-09-12; edit there first.
+```
+
+Editing the copy first means the two repos drift and the header lies, which is worse than being
+behind.
+
+## Why copies and not a shared package
+
+This repo has to run on its own from its own README. A judge who clones Vidiyal and runs
+`npm install && npm test` should not need a second checkout or a private registry for anything
+except a signed ledger to review, and a ledger is data, not code.
+
+## What is not vendored
+
+Everything that is Vidiyal's own idea: the trade pairing, the context builder, the rubric, the
+reasoning judge, the detectors, the checklist, the gate and the answerer. If a module has an
+opinion about what a good trade looks like, it belongs to this repo.
