@@ -244,6 +244,9 @@ function asRows(payload: unknown): Row[] {
       if (Array.isArray(value)) return value as Row[];
     }
   }
+  // Bitget answers an account with no fills as an empty object rather than an empty list,
+  // seen live on 15 September 2026; an object with no rows is a page with no rows.
+  if (payload && typeof payload === "object" && !Array.isArray(payload) && Object.keys(payload as Row).length === 0) return [];
   throw new TypeError("expected a list of rows from the Bitget account read");
 }
 
