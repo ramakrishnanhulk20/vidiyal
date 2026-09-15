@@ -10,7 +10,11 @@ import { utcDay, utcStamp } from "@/lib/format";
  * read-only read of a real one. The difference is the first thing this panel says,
  * because a grade means something different in each case.
  */
-export function Sources({ record }: { record: ReviewRecord }) {
+/**
+ * `published` is the base URL of the public record when the desk reads over HTTP, so the
+ * paths shown are ones a reader can open, not the folders on the machine that wrote them.
+ */
+export function Sources({ record, published }: { record: ReviewRecord; published: string | null }) {
   const { bundle, verification } = record;
   const source = bundle.source;
   const ledger = source.kind === "ledger";
@@ -39,9 +43,11 @@ export function Sources({ record }: { record: ReviewRecord }) {
         <Rise delay={0.06} className="md:col-span-7">
           <dl className="font-mono text-[11px] leading-[1.75] text-bone/70">
             <Fact label="record">
-              {source.kind === "ledger"
-                ? `Kaaval ledger at ${source.dir}, brain ${source.brain}`
-                : `Bitget account ${source.accountId}`}
+              {source.kind !== "ledger"
+                ? `Bitget account ${source.accountId}`
+                : published === null
+                  ? `Kaaval ledger at ${source.dir}, brain ${source.brain}`
+                  : `Kaaval ledger at ${browsable(published)}/kaaval/ledger, brain ${source.brain}`}
             </Fact>
             <Fact label="range">
               {dated
@@ -62,8 +68,10 @@ export function Sources({ record }: { record: ReviewRecord }) {
             </Fact>
             <Fact label="the public half sits at">
               <span className="break-all">
-                {record.publicKeyPath ??
-                  "no file: the key came from KAAVAL_LEDGER_PUBLIC_KEY_HEX in the environment"}
+                {published !== null
+                  ? `${published}/kaaval/ledger-key.pub.hex`
+                  : (record.publicKeyPath ??
+                    "no file: the key came from KAAVAL_LEDGER_PUBLIC_KEY_HEX in the environment")}
               </span>
             </Fact>
             <Fact label="bundle written">{utcStamp(record.generatedAt)}</Fact>
@@ -75,6 +83,15 @@ export function Sources({ record }: { record: ReviewRecord }) {
       </div>
     </section>
   );
+}
+
+/**
+ * A raw GitHub base does not list folders, so the ledger folder is named by the page that
+ * does; any other host is shown as it was given.
+ */
+function browsable(base: string): string {
+  const raw = /^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(base);
+  return raw === null ? base : `https://github.com/${raw[1]}/${raw[2]}/tree/${raw[3]}`;
 }
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {

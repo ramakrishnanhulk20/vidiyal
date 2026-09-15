@@ -9,7 +9,7 @@ import { Lesson } from "@/components/story/lesson";
 import { Night } from "@/components/story/night";
 import { ScoresPinned } from "@/components/story/scores-pinned";
 import { Sister } from "@/components/story/sister";
-import { loadReview, toDesk } from "@/lib/desk";
+import { loadReview, recordUrl, toDesk } from "@/lib/desk";
 import { kaavalUrl, readCheck, readLesson, readNight, readScores } from "@/lib/story";
 
 // Every beat is the record as it stands right now, and the gate verdict is the live
@@ -51,7 +51,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <Sources record={record} />
+      <Sources record={record} published={recordUrl()} />
 
       <Night night={night} />
 
