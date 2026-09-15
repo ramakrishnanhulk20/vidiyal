@@ -26,7 +26,7 @@ function Arrow() {
 function kaavalUrl(): string {
   const raw = process.env.KAAVAL_URL;
   return raw === undefined || raw.trim() === ""
-    ? "http://localhost:3000"
+    ? "https://kaaval-agent.vercel.app"
     : raw.trim().replace(/\/+$/, "");
 }
 

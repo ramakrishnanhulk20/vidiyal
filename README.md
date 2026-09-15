@@ -7,10 +7,10 @@ actually traded, rebuilds the market around every entry, grades the decision on 
 scores with the number behind each, finds the habits that repeat, and turns them into a
 checklist the next order has to pass before Bitget would even see it.
 
-Live site: not deployed yet, URL goes here &middot; Documentation: `/docs` on the live site
+[Live site](https://vidiyal-agent.vercel.app) &middot; [Documentation](https://vidiyal-agent.vercel.app/docs)
 &middot; [Bitget program](https://bitget-ai.gitbook.io/bitgetai_hackathons2) &middot;
 [Bitget Agent Hub](https://github.com/Bitget-AI/agent_hub) &middot; Kaaval, the sister trading
-agent: repo link goes here
+agent: [site](https://kaaval-agent.vercel.app), [repo](https://github.com/ramakrishnanhulk20/kaaval)
 
 The record in the demo bundle below is simulated. It is the signed ledger of Kaaval's Claude
 brain, a paper-trading agent that runs against live Bitget market data, so the prices, books and

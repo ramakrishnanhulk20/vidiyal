@@ -262,7 +262,7 @@ export async function readCheck(record: ReviewRecord): Promise<CheckBeat | null>
 export function kaavalUrl(): string {
   const raw = process.env.KAAVAL_URL;
   return raw === undefined || raw.trim() === ""
-    ? "http://localhost:3000"
+    ? "https://kaaval-agent.vercel.app"
     : raw.trim().replace(/\/+$/, "");
 }
 
