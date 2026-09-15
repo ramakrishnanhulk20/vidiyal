@@ -291,7 +291,7 @@ Idea: buy RTSLAUSDT 300 USDT
 review bundle: 2 graded trades, 2 patterns, 2 checklist items, 1 equity points
 
 Question: why did this account lose on rTSLA?
-  answered by: claude-sonnet-5, checked against the evidence below
+  answered by: claude-haiku-4-5-20251001, checked against the evidence below
   ... the written answer and its 28 row evidence table, cut here ...
   cited refs: ledger-demo:4>ledger-demo:6, ledger-demo:4>open
   numbers with no evidence behind them: none, every number in the answer came from a trade
