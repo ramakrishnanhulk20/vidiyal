@@ -9,16 +9,21 @@ const DEFAULT_PUBLIC_KEY_FILE = resolve(process.cwd(), "../kaaval/data/secrets/l
 const DEFAULT_MINUTES = 60;
 
 /**
- * How long one rebuild may take before the loop treats itself as hung.
+ * How long a rebuild may say nothing before the loop treats itself as hung.
  *
- * A full rebuild of both brains measured under a minute, and the slowest part is the news
- * feed waiting on SEC or GDELT. Ten minutes is silence, not slowness, and a promise that
- * is already stuck cannot be cancelled from here, so the honest recovery is to exit and
- * let pm2 start a clean process. Code 2 says the watchdog did it and not a clean stop.
+ * The clock is silence, not duration: every log line resets it. It used to time the whole
+ * rebuild, and once the record passed forty round trips a healthy rebuild that was still
+ * pacing its GDELT questions took more than ten minutes and was killed before the second
+ * brain was reached. A promise that is already stuck cannot be cancelled from here, so the
+ * honest recovery is to exit and let pm2 start a clean process. Code 2 says the watchdog
+ * did it and not a clean stop.
  */
 const WATCHDOG_MS = 10 * 60_000;
 
+let lastLineAt = Date.now();
+
 function log(line: string): void {
+  lastLineAt = Date.now();
   console.log(`${new Date().toISOString()} ${line}`);
 }
 
@@ -70,21 +75,23 @@ function flushOutput(graceMs = 1_000): Promise<void> {
 }
 
 async function watch<T>(work: Promise<T>, timeoutMs: number): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  let timer: ReturnType<typeof setInterval> | undefined;
+  lastLineAt = Date.now();
   const overrun = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      log(`watchdog: ${Math.round(timeoutMs / 1000)} seconds without a rebuild, exiting for pm2`);
+    timer = setInterval(() => {
+      if (Date.now() - lastLineAt < timeoutMs) return;
+      log(`watchdog: ${Math.round(timeoutMs / 1000)} seconds of silence from the rebuild, exiting for pm2`);
       void flushOutput().then(() => {
         process.exit(2);
-        reject(new Error("watchdog: the rebuild overran its budget"));
+        reject(new Error("watchdog: the rebuild went silent"));
       });
-    }, timeoutMs);
+    }, 15_000);
   });
 
   try {
     return await Promise.race([work, overrun]);
   } finally {
-    if (timer) clearTimeout(timer);
+    if (timer) clearInterval(timer);
   }
 }
 

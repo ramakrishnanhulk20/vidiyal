@@ -1,3 +1,5 @@
+import { join } from "node:path";
+import { readCache, requestHash, writeCache } from "../vendor/news/cache.js";
 import { gatherCalendar, gatherNews } from "../vendor/news/feed.js";
 import type { NewsProvider } from "./context.js";
 
@@ -11,6 +13,18 @@ const AFTER_MS = 60 * 60 * 1000;
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
+
+/**
+ * A bucket whose window closed more than a day ago cannot gain a headline, so its answer
+ * is kept on disk and a rebuild pays only for the trades that are new. Before this every
+ * rebuild asked GDELT again for every hour ever traded, at eight seconds a question: a
+ * record of 47 round trips took nine minutes and the watchdog ended the rebuild before
+ * the second brain was reached.
+ */
+const SETTLED_AFTER_MS = DAY_MS;
+const SETTLED_TTL_MS = 365 * DAY_MS;
+
+const REAL_SOURCES: NewsSources = { gather: gatherNews, calendar: gatherCalendar };
 
 /**
  * The two feed functions the provider calls. They are injectable so a test can prove the
@@ -48,11 +62,42 @@ interface Gathered {
 export function newsProvider(
   cacheDir: string,
   log: (line: string) => void,
-  sources: NewsSources = { gather: gatherNews, calendar: gatherCalendar },
+  sources: NewsSources = REAL_SOURCES,
+  // Injected sources are a test's, and a test that did not ask for the store must not
+  // find another test's answers in it.
+  settledDir: string | null = sources === REAL_SOURCES ? join(cacheDir, "settled-buckets") : null,
 ): NewsProvider {
   const buckets = new Map<string, Promise<Gathered>>();
 
   const load = async (underlying: string, symbol: string, bucketTs: number): Promise<Gathered> => {
+    const settled = Date.now() - (bucketTs + HOUR_MS + AFTER_MS) > SETTLED_AFTER_MS;
+    if (settledDir === null || !settled) return await gatherBucket(underlying, symbol, bucketTs, log);
+
+    // The Finnhub flag is part of the key so adding the key later asks again instead of
+    // serving an answer that was gathered without it.
+    const request = { underlying, bucketTs, finnhub: Boolean(process.env["FINNHUB_API_KEY"]) };
+    const store = { dir: settledDir, ttlMs: SETTLED_TTL_MS };
+    const hash = requestHash(request);
+    const kept = readCache<Gathered>(store, hash);
+    if (kept !== null) return kept;
+
+    // A source that was down answers with nothing, which is not the same as no news. Only
+    // a gather every source answered is kept.
+    let refused = false;
+    const fresh = await gatherBucket(underlying, symbol, bucketTs, (line) => {
+      if (line.includes(" failed, skipping")) refused = true;
+      log(line);
+    });
+    if (!refused) writeCache(store, hash, request, fresh);
+    return fresh;
+  };
+
+  const gatherBucket = async (
+    underlying: string,
+    symbol: string,
+    bucketTs: number,
+    log: (line: string) => void,
+  ): Promise<Gathered> => {
     const dayStart = Math.floor(bucketTs / DAY_MS) * DAY_MS;
     const [news, calendar] = await Promise.all([
       sources.gather(

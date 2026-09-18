@@ -1,3 +1,6 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { newsProvider, type NewsSources } from "../../src/review/news.js";
 import type { CalendarEvent, NewsItem } from "../../src/vendor/news/types.js";
@@ -109,5 +112,51 @@ describe("newsProvider", () => {
     const near = await newsProvider("cache", () => {}, fakeSources([])).eventsNear(NOON, "TSLAUSDT");
 
     expect(near).toEqual([]);
+  });
+});
+
+describe("newsProvider, the settled store", () => {
+  const settledDir = (): string => mkdtempSync(join(tmpdir(), "vidiyal-settled-"));
+
+  it("asks once ever for an hour that closed more than a day ago, across rebuilds", async () => {
+    const dir = settledDir();
+    const first = fakeSources([newsAt(NOON, "Tesla news")]);
+    const second = fakeSources([]);
+
+    const before = await newsProvider("cache", () => {}, first, dir).eventsNear(NOON, "TSLAUSDT");
+    const after = await newsProvider("cache", () => {}, second, dir).eventsNear(NOON, "TSLAUSDT");
+
+    expect(first.asked).toHaveLength(1);
+    expect(second.asked).toHaveLength(0);
+    expect(after).toEqual(before);
+  });
+
+  it("asks again for an hour that is still open, because headlines keep arriving", async () => {
+    const dir = settledDir();
+    const recent = Math.floor(Date.now() / HOUR) * HOUR;
+    const first = fakeSources([]);
+    const second = fakeSources([]);
+
+    await newsProvider("cache", () => {}, first, dir).eventsNear(recent, "TSLAUSDT");
+    await newsProvider("cache", () => {}, second, dir).eventsNear(recent, "TSLAUSDT");
+
+    expect(second.asked).toHaveLength(1);
+  });
+
+  it("does not keep a gather in which a source was down, since nothing is not no news", async () => {
+    const dir = settledDir();
+    const down: NewsSources & { asked: Ask[] } = fakeSources([]);
+    const gather = down.gather;
+    down.gather = async (opts, log) => {
+      log?.('gdelt: "TSLA" failed, skipping it (timeout)');
+      return await gather(opts, log);
+    };
+    const second = fakeSources([newsAt(NOON, "Tesla news")]);
+
+    await newsProvider("cache", () => {}, down, dir).eventsNear(NOON, "TSLAUSDT");
+    const after = await newsProvider("cache", () => {}, second, dir).eventsNear(NOON, "TSLAUSDT");
+
+    expect(second.asked).toHaveLength(1);
+    expect(after).toHaveLength(1);
   });
 });
