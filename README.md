@@ -344,7 +344,7 @@ Every key in `.env` is optional and nothing in this repo logs one:
 | `BITGET_API_KEY`, `BITGET_SECRET_KEY`, `BITGET_PASSPHRASE` | A read-only account review | The proof prints `account review skipped: no BITGET_API_KEY` and reviews the ledger only; a key Bitget refuses prints `account review skipped: Bitget refused the key` with Bitget's reason, and the ledger review above it still stands |
 | `BITGET_ACCOUNT_ID` | A label for the account being reviewed, which Bitget never sees | The record is tagged `account` |
 | `KAAVAL_LEDGER_DIR`, `KAAVAL_LEDGER_PUBLIC_KEY_HEX`, `KAAVAL_BRAIN` | Which ledger, which public key, which brain | The Kaaval checkout beside this repo, brain `claude` |
-| `ANTHROPIC_API_KEY`, `KAAVAL_CLAUDE_MODEL` | The reasoning score and the written answer | A trade with a note is left ungraded rather than guessed at, and the evidence table writes the answer itself |
+| `QWEN_API_KEY`, or `ANTHROPIC_API_KEY` when there is no Qwen key | The reasoning score and the written answer: Qwen first, Claude as the fallback | A trade with a note is left ungraded rather than guessed at, and the evidence table writes the answer itself |
 | `FINNHUB_API_KEY` | Company news and the earnings and macro calendars | The feed still reads SEC EDGAR and GDELT, which need no key |
 | `ASKNEWS_API_KEY` | A news search across many outlets for trades inside the last 48 hours | The source is skipped |
 | `ASKNEWS_HISTORICAL` | Set to 1 to search the AskNews archive for older trades too, one credit per traded hour | Older trades are reviewed from the other sources |
@@ -409,8 +409,8 @@ There is no engine folder on a host like that, so the gate and the ask cannot st
 process. `VIDIYAL_ENGINE_MODE=import` makes the desk call `checkIdea` and `answerQuestion` in its
 own process instead, with the same arguments and the same answers; the mode defaults to `spawn`
 when the engine's `node_modules` is beside the app and `import` when it is not. Import mode reads
-`ANTHROPIC_API_KEY` from the host's environment, and without it the evidence table writes the
-answer itself. The app builds with webpack rather than Turbopack for one reason: the engine names
+`QWEN_API_KEY`, then `ANTHROPIC_API_KEY`, from the host's environment, and with neither the evidence
+table writes the answer itself. The app builds with webpack rather than Turbopack for one reason: the engine names
 the `.js` each of its TypeScript files compiles to, and only webpack can be told to read those as
 the `.ts` they are.
 
@@ -540,8 +540,8 @@ MIT. See [LICENSE](LICENSE).
   run go through.
 - Bitget public market data: candles, order books, instruments and funding, the tape this review
   is rebuilt from.
-- Alibaba Qwen, reachable through the same `LlmClient` interface in `src/vendor/llm.ts` as an
-  alternative to Claude for the reasoning judge and the answers.
+- Alibaba Qwen through Bitget's hackathon endpoint, the desk's first choice for the reasoning judge
+  and the answers, with Claude behind the same `LlmClient` interface as the fallback.
 - SEC EDGAR for 8-K filings, GDELT for headlines, and Finnhub for company news and the earnings
   and macro calendars.
 - Kaaval, the sister trading agent, whose signed ledger is the record this desk reviews and whose

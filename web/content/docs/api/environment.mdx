@@ -20,7 +20,7 @@ every key with a one-line comment, and nothing in the repo logs a value.
 | `KAAVAL_LEDGER_PUBLIC_KEY_PATH` | The older name for the same thing, still read when `KAAVAL_LEDGER_PUBLIC_KEY_FILE` is unset | `../kaaval/data/secrets/ledger-key.pub.hex` |
 | `VIDIYAL_REVIEW_MINUTES` | How often the review loop rebuilds every brain's bundle | 60 |
 | `KAAVAL_BRAIN` | Which brain in the ledger to review | `claude` |
-| `ANTHROPIC_API_KEY` | The reasoning score and the written answer | Unset. A trade with a note is left ungraded rather than guessed at, and the evidence table writes the answer itself |
+| `ANTHROPIC_API_KEY` | The reasoning score and the written answer, only on a host with no `QWEN_API_KEY` | Unset. A trade with a note is left ungraded rather than guessed at, and the evidence table writes the answer itself |
 | `KAAVAL_CLAUDE_MODEL` | Which Claude model to use | `claude-haiku-4-5-20251001` |
 | `FINNHUB_API_KEY` | Company news and the earnings and macro calendars | Unset. The feed still reads SEC EDGAR and GDELT, which need no key |
 | `ASKNEWS_API_KEY` | A news search across many outlets for trades inside the last 48 hours | Unset. The source is skipped |
@@ -28,7 +28,7 @@ every key with a one-line comment, and nothing in the repo logs a value.
 | `KAAVAL_USER_AGENT` | The contact address SEC asks every caller to send | A placeholder in the vendored code. EDGAR refuses a request it does not recognise, so set it |
 | `KAAVAL_HTTP_TIMEOUT_MS` | How long one news, SEC or GDELT request may take, headers and body together | 20000 |
 | `KAAVAL_BITGET_TIMEOUT_MS` | How long one Bitget request may take. The SDK retries a read twice on top of this | 15000 |
-| `QWEN_API_KEY`, `QWEN_BASE_URL`, `QWEN_MODEL` | Read by the Qwen client in `src/vendor/llm.ts`, which is an alternative to Claude behind the same `LlmClient` interface | Nothing in this repo constructs that client today, so these are unused unless you wire it |
+| `QWEN_API_KEY`, `QWEN_BASE_URL`, `QWEN_MODEL` | The desk's first choice of model for the reasoning score and the written answer, through Bitget's hackathon endpoint | Unset. The desk falls back to Claude, and with neither key to the evidence table |
 
 ## The desk, in `web/`
 

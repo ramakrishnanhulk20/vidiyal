@@ -25,7 +25,8 @@ import { attachEquity, pairRoundTrips } from "../src/review/trades.js";
 import type { ChecklistItem, FillRecord, GradedTrade, Idea, RoundTrip } from "../src/review/types.js";
 import { createBitget } from "../src/vendor/bitget/client.js";
 import { defaultLedgerDir } from "./review.js";
-import { AnthropicClient, type LlmClient } from "../src/vendor/llm.js";
+import { deskModel } from "../src/review/model.js";
+import type { LlmClient } from "../src/vendor/llm.js";
 
 const DEFAULT_PUBLIC_KEY_PATH = resolve(process.cwd(), "../kaaval/data/secrets/ledger-key.pub.hex");
 
@@ -303,7 +304,7 @@ function readPublicKey(): string {
 
 /** The model client, or null when no key is set, which is a normal state and not an error. */
 function modelClient(): LlmClient | null {
-  return process.env["ANTHROPIC_API_KEY"] ? new AnthropicClient() : null;
+  return deskModel();
 }
 
 /**

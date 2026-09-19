@@ -11,7 +11,7 @@ import {
 import { ModelJudge, SilentJudge, type RationaleJudge } from "../../../src/review/judge";
 import { newsProvider } from "../../../src/review/news";
 import * as patternDetectors from "../../../src/review/patterns";
-import { AnthropicClient } from "../../../src/vendor/llm";
+import { deskModel } from "../../../src/review/model";
 import type { BitgetCredentials } from "../../../src/vendor/tenant/credentials";
 import type { ReviewRecord } from "../desk";
 import { audit, openCredentials } from "./connections";
@@ -287,8 +287,8 @@ export function detectorNames(): string[] {
  * folder of its own, and a second review of the same hours then costs no feed calls.
  */
 function engineInput(creds: BitgetCredentials, accountId: string, range: ReviewRange): AccountReviewInput {
-  const key = tenantEnv().anthropicKey;
-  const judge: RationaleJudge = key === null ? new SilentJudge() : new ModelJudge(new AnthropicClient());
+  const model = deskModel();
+  const judge: RationaleJudge = model === null ? new SilentJudge() : new ModelJudge(model);
   const cacheDir = join(tmpdir(), "vidiyal-web", "news-cache");
 
   return {

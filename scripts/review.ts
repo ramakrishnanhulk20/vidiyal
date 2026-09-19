@@ -23,7 +23,8 @@ import { detectPatterns, type MarkPoint } from "../src/review/patterns.js";
 import { attachEquity, pairRoundTrips } from "../src/review/trades.js";
 import type { FillRecord, GradedTrade, RoundTrip } from "../src/review/types.js";
 import { createBitget } from "../src/vendor/bitget/client.js";
-import { AnthropicClient, type LlmClient } from "../src/vendor/llm.js";
+import { deskModel } from "../src/review/model.js";
+import type { LlmClient } from "../src/vendor/llm.js";
 
 /**
  * The ledger read when nothing names one, shared with the proof script.
@@ -172,7 +173,7 @@ function readPublicKey(path: string | null): { hex: string; file: string | null 
 
 /** The model client, or null when no key is set, which is a normal state and not an error. */
 function modelClient(): LlmClient | null {
-  return process.env["ANTHROPIC_API_KEY"] ? new AnthropicClient() : null;
+  return deskModel();
 }
 
 /**

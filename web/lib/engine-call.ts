@@ -7,7 +7,8 @@ import type { ReviewBundle } from "../../src/ask/types";
 import { checkIdea, type DeskState } from "../../src/checklist/gate";
 import type { ChecklistItem, Idea, IdeaCheck } from "../../src/review/types";
 import { createBitget } from "../../src/vendor/bitget/client";
-import { AnthropicClient, type LlmClient } from "../../src/vendor/llm";
+import { deskModel } from "../../src/review/model";
+import type { LlmClient } from "../../src/vendor/llm";
 import { engineRoot } from "./desk";
 
 /** How long the desk waits on the engine before it tells the reader the wait is over. */
@@ -71,7 +72,7 @@ export async function runGate(request: GateRequest): Promise<IdeaCheck> {
 
 /**
  * One question answered against a finished review. client is only passed by a test: left
- * out, the answerer gets Claude when ANTHROPIC_API_KEY is set and nothing when it is not,
+ * out, the answerer gets Qwen when QWEN_API_KEY is set, Claude when only ANTHROPIC_API_KEY is, and nothing otherwise,
  * which is a normal state in which the evidence table writes the paragraph itself.
  */
 export async function runAsk(request: AskRequest, client?: LlmClient | null): Promise<AskResult> {
@@ -80,7 +81,7 @@ export async function runAsk(request: AskRequest, client?: LlmClient | null): Pr
 }
 
 function modelClient(): LlmClient | null {
-  return process.env.ANTHROPIC_API_KEY ? new AnthropicClient() : null;
+  return deskModel();
 }
 
 async function gateHere(request: GateRequest): Promise<IdeaCheck> {

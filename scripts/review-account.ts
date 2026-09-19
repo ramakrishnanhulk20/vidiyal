@@ -18,7 +18,8 @@ import { newsProvider } from "../src/review/news.js";
 import * as patternDetectors from "../src/review/patterns.js";
 import { createBitget } from "../src/vendor/bitget/client.js";
 import type { BitgetCredentials } from "../src/vendor/tenant/credentials.js";
-import { AnthropicClient, type LlmClient } from "../src/vendor/llm.js";
+import { deskModel } from "../src/review/model.js";
+import type { LlmClient } from "../src/vendor/llm.js";
 import { fakeBitget, fixtureData } from "../test/support/fake-bitget.js";
 import { fakeAccount } from "../test/tenant/fake-account.js";
 
@@ -64,7 +65,7 @@ function credentialsFromEnv(): BitgetCredentials | null {
 
 /** The model client, or null when no key is set, which is a normal state and not an error. */
 function modelClient(): LlmClient | null {
-  return process.env["ANTHROPIC_API_KEY"] ? new AnthropicClient() : null;
+  return deskModel();
 }
 
 /**

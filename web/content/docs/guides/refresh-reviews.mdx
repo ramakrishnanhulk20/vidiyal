@@ -67,7 +67,7 @@ Counted from the code paths, not metered against a bill:
 - News, per company per hour of trading: at most one SEC EDGAR call, one GDELT query and two
   Finnhub calls, plus one Finnhub macro calendar call per day of the range. Cached after the first.
 - The model: one call per round trip that carries a written note, and only when
-  `ANTHROPIC_API_KEY` is set.
+  `QWEN_API_KEY` or `ANTHROPIC_API_KEY` is set.
 
 ## Serving what it wrote
 

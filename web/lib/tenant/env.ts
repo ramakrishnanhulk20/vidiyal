@@ -41,6 +41,7 @@ const schema = z.object({
     .regex(/^[0-9a-fA-F]{64}$/, "KAAVAL_KEY_SEAL_HEX must be exactly 64 hex characters, which is 32 bytes")
     .optional(),
   ANTHROPIC_API_KEY: nonEmpty("the Anthropic key"),
+  QWEN_API_KEY: nonEmpty("the Qwen key"),
 });
 
 export interface TenantEnv {
@@ -49,6 +50,7 @@ export interface TenantEnv {
   databaseUrl: string | null;
   sealKeyHex: string | null;
   anthropicKey: string | null;
+  qwenKey: string | null;
 }
 
 export class TenantEnvError extends Error {
@@ -86,6 +88,7 @@ export function parseTenantEnv(source: Record<string, string | undefined> = proc
     databaseUrl: data.DATABASE_URL ?? null,
     sealKeyHex: data.KAAVAL_KEY_SEAL_HEX ?? null,
     anthropicKey: data.ANTHROPIC_API_KEY ?? null,
+    qwenKey: data.QWEN_API_KEY ?? null,
   };
 }
 
@@ -127,7 +130,7 @@ export function tenantConfigured(env: TenantEnv = tenantEnv()): TenantStatus {
     signIn: env.privyAppId !== null && env.privyAppSecret !== null,
     database: env.databaseUrl !== null,
     sealing: env.sealKeyHex !== null,
-    models: env.anthropicKey !== null,
+    models: env.qwenKey !== null || env.anthropicKey !== null,
     missing,
   };
 }

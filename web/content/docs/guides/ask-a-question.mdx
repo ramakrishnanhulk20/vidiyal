@@ -37,5 +37,5 @@ carried that no row holds. From `npm run proof:review` on 2026-09-12:
 ## Limits worth knowing
 
 A question is trimmed to 300 characters. The answer is drawn from at most five trades. With no
-`ANTHROPIC_API_KEY` the evidence table writes the paragraph itself, which is plainer English and
+model key (`QWEN_API_KEY` first, `ANTHROPIC_API_KEY` as the fallback) the evidence table writes the paragraph itself, which is plainer English and
 exactly as true. The engine run is given 90 seconds before the desk stops waiting and says so.
