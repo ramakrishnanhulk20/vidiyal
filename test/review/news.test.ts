@@ -143,7 +143,7 @@ describe("newsProvider, the settled store", () => {
     expect(second.asked).toHaveLength(1);
   });
 
-  it("does not keep a gather in which a source was down, since nothing is not no news", async () => {
+  it("asks again six hours after a gather in which a source was down, and not before", async () => {
     const dir = settledDir();
     const down: NewsSources & { asked: Ask[] } = fakeSources([]);
     const gather = down.gather;
@@ -151,12 +151,17 @@ describe("newsProvider, the settled store", () => {
       log?.('gdelt: "TSLA" failed, skipping it (timeout)');
       return await gather(opts, log);
     };
-    const second = fakeSources([newsAt(NOON, "Tesla news")]);
+    const soon = fakeSources([newsAt(NOON, "Tesla news")]);
+    const later = fakeSources([newsAt(NOON, "Tesla news")]);
+    const start = Date.now();
 
-    await newsProvider("cache", () => {}, down, dir).eventsNear(NOON, "TSLAUSDT");
-    const after = await newsProvider("cache", () => {}, second, dir).eventsNear(NOON, "TSLAUSDT");
+    await newsProvider("cache", () => {}, down, dir, () => start).eventsNear(NOON, "TSLAUSDT");
+    const within = await newsProvider("cache", () => {}, soon, dir, () => start + 5 * HOUR).eventsNear(NOON, "TSLAUSDT");
+    const after = await newsProvider("cache", () => {}, later, dir, () => start + 7 * HOUR).eventsNear(NOON, "TSLAUSDT");
 
-    expect(second.asked).toHaveLength(1);
+    expect(soon.asked).toHaveLength(0);
+    expect(within).toHaveLength(0);
+    expect(later.asked).toHaveLength(1);
     expect(after).toHaveLength(1);
   });
 });

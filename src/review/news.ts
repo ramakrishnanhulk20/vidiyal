@@ -24,6 +24,15 @@ const DAY_MS = 24 * HOUR_MS;
 const SETTLED_AFTER_MS = DAY_MS;
 const SETTLED_TTL_MS = 365 * DAY_MS;
 
+/**
+ * How long a gather in which a source was down stands in before it is asked again. GDELT
+ * throttles one address hard: the same few hours were refused rebuild after rebuild, each
+ * refusal costing a paced retry, and an hourly rebuild of 80 round trips had grown to
+ * twenty one minutes. The partial answer is still labelled by what it holds, and six
+ * hours on the question is asked again.
+ */
+const REFUSED_TTL_MS = 6 * HOUR_MS;
+
 const REAL_SOURCES: NewsSources = { gather: gatherNews, calendar: gatherCalendar };
 
 /**
@@ -66,11 +75,12 @@ export function newsProvider(
   // Injected sources are a test's, and a test that did not ask for the store must not
   // find another test's answers in it.
   settledDir: string | null = sources === REAL_SOURCES ? join(cacheDir, "settled-buckets") : null,
+  clock: () => number = Date.now,
 ): NewsProvider {
   const buckets = new Map<string, Promise<Gathered>>();
 
   const load = async (underlying: string, symbol: string, bucketTs: number): Promise<Gathered> => {
-    const settled = Date.now() - (bucketTs + HOUR_MS + AFTER_MS) > SETTLED_AFTER_MS;
+    const settled = clock() - (bucketTs + HOUR_MS + AFTER_MS) > SETTLED_AFTER_MS;
     if (settledDir === null || !settled) return await gatherBucket(underlying, symbol, bucketTs, log);
 
     // Which keyed sources were present is part of the key, so adding a key later asks again
@@ -83,17 +93,18 @@ export function newsProvider(
     };
     const store = { dir: settledDir, ttlMs: SETTLED_TTL_MS };
     const hash = requestHash(request);
-    const kept = readCache<Gathered>(store, hash);
+    const refusedStore = { dir: join(settledDir, "refused"), ttlMs: REFUSED_TTL_MS };
+    const kept = readCache<Gathered>(store, hash, clock()) ?? readCache<Gathered>(refusedStore, hash, clock());
     if (kept !== null) return kept;
 
     // A source that was down answers with nothing, which is not the same as no news. Only
-    // a gather every source answered is kept.
+    // a gather every source answered is kept for good; the other kind is kept for hours.
     let refused = false;
     const fresh = await gatherBucket(underlying, symbol, bucketTs, (line) => {
       if (line.includes(" failed, skipping")) refused = true;
       log(line);
     });
-    if (!refused) writeCache(store, hash, request, fresh);
+    writeCache(refused ? refusedStore : store, hash, request, fresh);
     return fresh;
   };
 
