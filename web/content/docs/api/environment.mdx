@@ -23,6 +23,8 @@ every key with a one-line comment, and nothing in the repo logs a value.
 | `ANTHROPIC_API_KEY` | The reasoning score and the written answer | Unset. A trade with a note is left ungraded rather than guessed at, and the evidence table writes the answer itself |
 | `KAAVAL_CLAUDE_MODEL` | Which Claude model to use | `claude-haiku-4-5-20251001` |
 | `FINNHUB_API_KEY` | Company news and the earnings and macro calendars | Unset. The feed still reads SEC EDGAR and GDELT, which need no key |
+| `ASKNEWS_API_KEY` | A news search across many outlets for trades inside the last 48 hours | Unset. The source is skipped |
+| `ASKNEWS_HISTORICAL` | `1` searches the AskNews archive for older trades too, one credit per traded hour | Unset. Older trades are reviewed from the other sources |
 | `KAAVAL_USER_AGENT` | The contact address SEC asks every caller to send | A placeholder in the vendored code. EDGAR refuses a request it does not recognise, so set it |
 | `KAAVAL_HTTP_TIMEOUT_MS` | How long one news, SEC or GDELT request may take, headers and body together | 20000 |
 | `KAAVAL_BITGET_TIMEOUT_MS` | How long one Bitget request may take. The SDK retries a read twice on top of this | 15000 |

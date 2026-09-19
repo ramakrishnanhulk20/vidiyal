@@ -73,9 +73,14 @@ export function newsProvider(
     const settled = Date.now() - (bucketTs + HOUR_MS + AFTER_MS) > SETTLED_AFTER_MS;
     if (settledDir === null || !settled) return await gatherBucket(underlying, symbol, bucketTs, log);
 
-    // The Finnhub flag is part of the key so adding the key later asks again instead of
-    // serving an answer that was gathered without it.
-    const request = { underlying, bucketTs, finnhub: Boolean(process.env["FINNHUB_API_KEY"]) };
+    // Which keyed sources were present is part of the key, so adding a key later asks again
+    // instead of serving an answer that was gathered without it.
+    const request = {
+      underlying,
+      bucketTs,
+      finnhub: Boolean(process.env["FINNHUB_API_KEY"]),
+      asknews: Boolean(process.env["ASKNEWS_API_KEY"]) && process.env["ASKNEWS_HISTORICAL"] === "1",
+    };
     const store = { dir: settledDir, ttlMs: SETTLED_TTL_MS };
     const hash = requestHash(request);
     const kept = readCache<Gathered>(store, hash);

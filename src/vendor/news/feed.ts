@@ -2,6 +2,7 @@
 
 import { createHash } from "node:crypto";
 import type { CalendarEvent, NewsItem } from "./types.js";
+import { fetchAskNews, type AskNewsWindow } from "./asknews.js";
 import { fetchEdgar8k } from "./edgar.js";
 import {
   fetchFinnhub,
@@ -19,9 +20,10 @@ export interface FeedOptions {
    * The end of the window, when it is not now. Vidiyal adds this: Kaaval always asks
    * about the last few hours, but a review is about a trade that may be weeks old, and
    * GDELT sorted by date newest first would answer a long timespan with this week's
-   * stories and never reach the day the trade happened. With this set, GDELT is asked
-   * for the window itself. Only GDELT reads it; Finnhub and EDGAR are still asked up to
-   * today and filtered afterwards.
+   * stories and never reach the day the trade happened. With this set, GDELT and AskNews
+   * are asked for the window itself, which for AskNews means an archive search it only
+   * makes when ASKNEWS_HISTORICAL is 1. Finnhub and EDGAR are still asked up to today
+   * and filtered afterwards.
    */
   untilTs?: number;
 }
@@ -47,6 +49,9 @@ const MAX_ECONOMIC_EVENTS = 40;
 const GDELT_MAX_RECORDS = 75;
 const MAX_GDELT_ITEMS = 40;
 
+/** AskNews answers one batched question too, and it is asked for thirty articles. */
+const MAX_ASKNEWS_ITEMS = 30;
+
 /** Below this many tagged stories the batch's macro headlines are worth keeping. */
 const MIN_TAGGED_BEFORE_DROP = 3;
 
@@ -60,14 +65,17 @@ const ET_ZONE = "America/New_York";
 /**
  * Everything published about these symbols since sinceTs, newest first, deduplicated.
  *
- * Three sources with different failure modes: Finnhub carries company news but needs a
+ * Four sources with different failure modes: Finnhub carries company news but needs a
  * key, SEC EDGAR carries the filing itself and needs none, GDELT carries what the rest
- * of the web is saying and needs none. A source that is missing or broken is written to
- * the log and skipped; it never appears in the returned items and never throws, because
- * a tick with two feeds is worth more than a tick that failed. Items are tagged with
- * every Kaaval symbol they touch: the one the source was queried for, or for GDELT's one
- * batched question the tickers and names its own title and url carry, plus any other
- * ticker named in the headline.
+ * of the web is saying and needs none, and AskNews searches across many outlets for a
+ * key and one metered credit, asked once a clock hour for the whole universe. AskNews is
+ * what keeps the brains reading something on a night GDELT throttles us. A source that
+ * is missing or broken is written to the log and skipped; it never appears in the
+ * returned items and never throws, because a tick with three feeds is worth more than a
+ * tick that failed. Items are tagged with every Kaaval symbol they touch: the one the
+ * source was queried for, or for the batched questions GDELT and AskNews each ask, the
+ * tickers and names the story's own words and url carry, plus any other ticker named in
+ * the headline.
  */
 export async function gatherNews(opts: FeedOptions, log: Log = () => {}): Promise<NewsItem[]> {
   const now = Date.now();
@@ -182,7 +190,54 @@ export async function gatherNews(opts: FeedOptions, log: Log = () => {}): Promis
     return [...kept, ...newest(macro).slice(0, MAX_PER_SOURCE)];
   };
 
-  const batches = await Promise.all([finnhub(), edgar(), gdelt()]);
+  /**
+   * One keyword search for the whole universe, with the summary read as part of the
+   * headline when the story is tagged: AskNews writes a neutral title and puts the
+   * company in the sentence under it. The thin-haul rule is GDELT's, for the same
+   * reason: a story that names nothing we hold is only worth prompt room on a quiet
+   * night. A review's window ends in the past, so it is handed both bounds and AskNews
+   * decides for itself whether that is an archive search.
+   */
+  const asknews = async (): Promise<NewsItem[]> => {
+    const tagged: NewsItem[] = [];
+    const macro: NewsItem[] = [];
+    const window: AskNewsWindow =
+      opts.untilTs === undefined
+        ? { fromTs: opts.sinceTs }
+        : { fromTs: opts.sinceTs, toTs: opts.untilTs };
+    const articles = await fetchAskNews(underlyings, window, { cacheDir: opts.cacheDir, log });
+
+    for (const article of articles) {
+      if (article.ts < opts.sinceTs) continue;
+      if (opts.untilTs !== undefined && article.ts > opts.untilTs) continue;
+      const symbols = tagSymbols(
+        { title: `${article.title} ${article.summary ?? ""}`, url: article.url },
+        opts.symbols,
+      );
+      const item: NewsItem = {
+        id: idFor("asknews", article.url),
+        ts: article.ts,
+        source: `asknews/${article.domain}`,
+        headline: article.title,
+        summary: article.summary,
+        url: article.url,
+        symbols,
+      };
+      (symbols.length > 0 ? tagged : macro).push(item);
+    }
+
+    log(
+      `asknews: 1 request for ${underlyings.length} underlyings answered ` +
+        `${articles.length} articles, ${tagged.length} tagged`,
+    );
+
+    const newest = (list: NewsItem[]): NewsItem[] => [...list].sort((a, b) => b.ts - a.ts);
+    const kept = newest(tagged).slice(0, MAX_ASKNEWS_ITEMS);
+    if (tagged.length >= MIN_TAGGED_BEFORE_DROP) return kept;
+    return [...kept, ...newest(macro).slice(0, MAX_PER_SOURCE)];
+  };
+
+  const batches = await Promise.all([finnhub(), edgar(), gdelt(), asknews()]);
   const merged = dedupe(batches.flat().sort((a, b) => b.ts - a.ts));
   return merged.slice(0, MAX_ITEMS).map((item) => ({
     ...item,

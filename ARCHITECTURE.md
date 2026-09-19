@@ -17,7 +17,7 @@ flowchart LR
     candles[candles, books, funding]
     hours[session clock, divergence]
   end
-  news[News and calendars<br/>Finnhub, SEC EDGAR, GDELT]
+  news[News and calendars<br/>Finnhub, SEC EDGAR, GDELT, AskNews]
   subgraph engine[Vidiyal engine, one Node service]
     ingest[ingest/<br/>ledger and account readers]
     trades[review/trades<br/>FIFO pairing into round trips]
