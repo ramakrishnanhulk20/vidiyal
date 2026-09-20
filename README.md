@@ -346,8 +346,7 @@ Every key in `.env` is optional and nothing in this repo logs one:
 | `KAAVAL_LEDGER_DIR`, `KAAVAL_LEDGER_PUBLIC_KEY_HEX`, `KAAVAL_BRAIN` | Which ledger, which public key, which brain | The Kaaval checkout beside this repo, brain `claude` |
 | `QWEN_API_KEY`, or `ANTHROPIC_API_KEY` when there is no Qwen key | The reasoning score and the written answer: Qwen first, Claude as the fallback | A trade with a note is left ungraded rather than guessed at, and the evidence table writes the answer itself |
 | `FINNHUB_API_KEY` | Company news and the earnings and macro calendars | The feed still reads SEC EDGAR and GDELT, which need no key |
-| `ASKNEWS_API_KEY` | A news search across many outlets for trades inside the last 48 hours | The source is skipped |
-| `ASKNEWS_HISTORICAL` | Set to 1 to search the AskNews archive for older trades too, one credit per traded hour | Older trades are reviewed from the other sources |
+| `ASKNEWS_API_KEY`, `ASKNEWS_HISTORICAL` | A news search across many outlets for the hour of each trade, only when both are set: a review asks about every traded hour, one credit each | Trades are reviewed from the other sources |
 | `KAAVAL_USER_AGENT` | The contact address SEC asks every caller to send | EDGAR refuses the request |
 | `KAAVAL_HTTP_TIMEOUT_MS`, `KAAVAL_BITGET_TIMEOUT_MS` | Per request timeouts | 20000 and 15000 milliseconds |
 | `NEXT_PUBLIC_PRIVY_APP_ID`, `PRIVY_APP_SECRET` | Sign-in for the account area | `/connect` and `/account` say plainly that sign-in is not set up on this host |
