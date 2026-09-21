@@ -24,6 +24,15 @@ const DESKTOP = { tilt: [58, 13], turn: [-13, -2], gap: [66, 112], lift: [0, -76
 const NARROW = { tilt: [50, 12], turn: [-6, -1.2], gap: [56, 80], lift: [0, -60] };
 const MOBILE = { tilt: [18, 9], turn: [-4, -1.5], gap: [62, 74], lift: [8, -10] };
 
+/**
+ * How many spines the stack carries. Each one stands a step nearer the reader than the
+ * one before it, so the stack that was drawn for eleven trades put the sixtieth a metre
+ * in front of the page: spines as wide as the window, over the navigation and off the
+ * bottom of the screen. The newest eleven stay on the shelf and the note says how many
+ * more the record holds.
+ */
+const SHELF_SPINES = 11;
+
 /** Below this the turn has to come in, above it the full desktop stack fits. */
 const WIDE_PX = 1366;
 const SIDE_PX = 768;
@@ -33,7 +42,8 @@ const ENTER = { duration: 0.95, ease: [0.16, 1, 0.3, 1] as const };
 /** How long a spine stays marked after the reader comes back to it from its own page. */
 const MARK_MS = 4500;
 
-export function Shelf({ spines, className = "" }: { spines: Spine[]; className?: string }) {
+export function Shelf({ spines: all, className = "" }: { spines: Spine[]; className?: string }) {
+  const spines = all.slice(0, SHELF_SPINES);
   const stageRef = useRef<HTMLDivElement>(null);
   const rigRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
@@ -157,6 +167,12 @@ export function Shelf({ spines, className = "" }: { spines: Spine[]; className?:
           </div>
         ))}
       </div>
+
+      {all.length > SHELF_SPINES ? (
+        <p className="absolute bottom-6 right-6 max-w-[30ch] text-right font-mono text-[10px] uppercase leading-relaxed tracking-[0.16em] text-bone/40">
+          the newest {SHELF_SPINES} of {all.length} round trips. patterns and ask reach the rest
+        </p>
+      ) : null}
 
       {spines.length < 3 ? (
         <p className="absolute bottom-6 right-6 max-w-[22ch] text-right font-mono text-[10px] uppercase leading-relaxed tracking-[0.16em] text-bone/40">
