@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Label, Rise } from "@/components/editorial";
 import { ConnectForm } from "@/components/tenant/connect-form";
 import { SignInGate } from "@/components/tenant/sign-in-gate";
@@ -49,6 +50,16 @@ export default function ConnectPage() {
             sign in, but connecting will be refused until that is done.
           </p>
         )}
+      </Rise>
+
+      <Rise delay={0.06} className="mt-12">
+        <p className="max-w-[56ch] border-l border-bone/20 pl-5 font-mono text-[11px] leading-[1.8] text-bone/60">
+          No Bitget key to hand?{" "}
+          <Link href="/demo" className="text-bone underline decoration-dawn underline-offset-4 hover:text-dawn">
+            Open the demo record
+          </Link>{" "}
+          and see every screen on a signed record anyone can check.
+        </p>
       </Rise>
 
       <Rise delay={0.08} className="mt-16 md:mt-20">
