@@ -17,7 +17,7 @@ export function TenantProviders({ appId, children }: { appId: string; children: 
     <PrivyProvider
       appId={appId}
       config={{
-        loginMethods: ["email", "google", "twitter", "passkey"],
+        loginMethods: ["email"],
         appearance: {
           theme: "#14100d",
           accentColor: "#ff7d55",

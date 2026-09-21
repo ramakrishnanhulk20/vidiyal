@@ -91,7 +91,7 @@ so the shape can be seen on a machine that has never held one.
 
 For your account, on the site:
 
-- Sign in at `/connect` with email, Google, X or a passkey, paste a read-only Bitget key, and the
+- Sign in at `/connect` with a code sent to your email, paste a read-only Bitget key, and the
   desk checks it with one read and shows you what it saw: the account number, the equity and the
   open positions. A key Bitget refuses is never stored, and the reason comes back as a sentence
   with the next step in it.
